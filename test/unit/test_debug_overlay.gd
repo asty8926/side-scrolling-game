@@ -81,3 +81,28 @@ func test_arrow_in_flight_is_drawn_from_a_restored_snapshot() -> void:
 	overlay.refresh(restored)
 	assert_eq(overlay.drawn_hitboxes, 1, "the arrow (x1 has no melee hitbox)")
 	assert_string_contains(DebugOverlay.describe(restored, false, 60.0), "arrows in flight: 1")
+
+
+func test_frees_unparented_debug_boxes() -> void:
+	var overlay: DebugOverlay = DebugOverlay.new()
+	add_child(overlay)
+	var lines: MeshInstance3D = overlay._lines
+	assert_true(is_instance_valid(lines))
+	assert_eq(lines.get_parent(), null)
+	overlay.free()
+	assert_false(is_instance_valid(lines), "unparented DebugBoxes must be freed with the overlay")
+
+
+func test_frees_debug_boxes_attached_to_world_root() -> void:
+	var root: Node3D = Node3D.new()
+	add_child_autofree(root)
+	var overlay: DebugOverlay = DebugOverlay.new()
+	overlay.world_root = root
+	add_child(overlay)
+	await get_tree().process_frame
+	var lines: MeshInstance3D = overlay._lines
+	assert_true(is_instance_valid(lines))
+	assert_eq(lines.get_parent(), root)
+	overlay.free()
+	assert_false(is_instance_valid(lines), "DebugBoxes under world_root must be freed with the overlay")
+	assert_eq(root.find_child("DebugBoxes", true, false), null)

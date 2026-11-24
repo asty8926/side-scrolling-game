@@ -38,9 +38,30 @@ func _ready() -> void:
 	material.vertex_color_use_as_albedo = true
 	material.no_depth_test = true
 	_lines.material_override = material
+	# Attach from this node (not world_root.add_child.call_deferred), so a
+	# freed overlay cancels the deferred call instead of adding a freed mesh.
 	if world_root != null:
-		world_root.add_child.call_deferred(_lines)
+		call_deferred(&"_attach_lines")
 	set_overlay_visible(false)
+
+
+func _attach_lines() -> void:
+	if world_root == null or _lines == null or not is_instance_valid(_lines):
+		return
+	if _lines.get_parent() == world_root:
+		return
+	world_root.add_child(_lines)
+
+
+func _exit_tree() -> void:
+	# _lines lives under world_root, or is unparented in tests, so it is not
+	# freed with this CanvasLayer. Release it in both cases.
+	if _lines != null and is_instance_valid(_lines):
+		var parent: Node = _lines.get_parent()
+		if parent != null:
+			parent.remove_child(_lines)
+		_lines.free()
+	_lines = null
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -50,7 +71,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func set_overlay_visible(on: bool) -> void:
 	visible = on and OS.is_debug_build()
-	_lines.visible = visible
+	if _lines != null and is_instance_valid(_lines):
+		_lines.visible = visible
 
 
 func _process(_delta: float) -> void:
