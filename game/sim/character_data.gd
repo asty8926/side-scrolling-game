@@ -25,6 +25,8 @@ func validate() -> Array[String]:
 		problems.append("hurtbox is missing")
 	else:
 		problems.append_array(hurtbox.validate())
+	if kd_recovery_per_tick < 0:
+		problems.append("kd_recovery_per_tick must be >= 0 (0 = KD never wears off)")
 	if moveset != null:
 		problems.append_array(moveset.validate())
 	return problems

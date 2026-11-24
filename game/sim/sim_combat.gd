@@ -33,9 +33,8 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 		return
 	var data: CharacterData = world.characters[f.character]
 	if f.hitstun > 0:
-		f.hitstun -= 1
 		f.idle_ticks = 0
-		return  # cannot act in hitstun
+		return  # cannot act in hitstun (it expires in apply_motion, after movement)
 	f.kd = maxi(0, f.kd - data.kd_recovery_per_tick)
 	var moveset: MoveSet = data.moveset
 	if moveset == null:
@@ -80,6 +79,10 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 ## Step 1 of a tick's combat, for every fighter before any hit test: the
 ## move's root motion for the current move tick.
 static func apply_motion(world: SimWorld, f: SimFighter) -> void:
+	# Hitstun ticks down here, after this tick's attack and movement checks,
+	# so both stay blocked for the same ticks.
+	if f.hitstun > 0:
+		f.hitstun -= 1
 	var move: MoveData = current_move(world, f)
 	if move == null:
 		return
@@ -87,8 +90,18 @@ static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	f.x = clampi(f.x + move.motion_at(f.move_tick) * f.facing, world.room.left + m.half_width, world.room.right - m.half_width)
 
 
+## A melee contact found in resolve_hits, applied in apply_hits.
+class PendingHit:
+	var dir: int
+	var target: SimFighter
+	var move: MoveData
+	var damage: int
+
+
 ## Step 2: hits every overlapping hurtbox once per box, with every fighter
-## already at its final position for the tick (no fighter-order dependence).
+## already at its final position for the tick. Contacts are only collected
+## here and applied in apply_hits, so two fighters trading active attacks both
+## land, whatever the fighter order.
 static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 	var move: MoveData = current_move(world, f)
 	if move == null:
@@ -106,8 +119,20 @@ static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 				f.hit_keys.append(key)
 				var attack: int = world.characters[f.character].attack
 				var damage: int = attack * move.damage_percent / 100
-				_take_hit(world, f.facing, target, move, damage)
+				var hit: PendingHit = PendingHit.new()
+				hit.dir = f.facing
+				hit.target = target
+				hit.move = move
+				hit.damage = damage
+				world.pending_hits.append(hit)
 				world.emit_hit(f.id, target.id, move, damage)
+
+
+## Step 2b: applies the melee contacts of this tick (in the order found).
+static func apply_hits(world: SimWorld) -> void:
+	for hit: PendingHit in world.pending_hits:
+		_take_hit(world, hit.dir, hit.target, hit.move, hit.damage)
+	world.pending_hits.clear()
 
 
 ## Step 3: projectiles already in flight move, then hit the first hurtbox they

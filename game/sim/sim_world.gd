@@ -44,6 +44,8 @@ var input_settings: InputSettings = InputSettings.new()
 var tier_height: int = 0
 ## Player-controlled fighters, stable insertion order.
 var fighters: Array[SimFighter] = []
+## Melee contacts of the current tick (always empty between ticks).
+var pending_hits: Array[SimCombat.PendingHit] = []
 ## Projectiles in flight, in creation (id) order.
 var projectiles: Array[SimProjectile] = []
 ## Most projectiles alive at once (a snapshot limit).
@@ -269,6 +271,7 @@ func step(inputs: Array[InputFrame]) -> void:
 		SimCombat.apply_motion(self, fighter)
 	for fighter: SimFighter in fighters:
 		SimCombat.resolve_hits(self, fighter)
+	SimCombat.apply_hits(self)
 	SimCombat.step_projectiles(self)
 	for fighter: SimFighter in fighters:
 		SimCombat.fire_projectiles(self, fighter)

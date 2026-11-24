@@ -67,5 +67,6 @@ static func _training(world_seed: int) -> SimWorld:
 		return null
 	var fighter: SimFighter = world.fighters[world.fighters.size() - 1]
 	fighter.x = world.room.spawn_x + DUMMY_OFFSET
+	fighter.home_x = fighter.x
 	fighter.facing = SimFighter.LEFT
 	return world

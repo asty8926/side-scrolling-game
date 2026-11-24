@@ -59,7 +59,7 @@ func test_reset_restores_the_dummy() -> void:
 	assert_eq(dummy.kd, 0)
 	assert_eq(dummy.combo, 0)
 	assert_eq(dummy.hitstun, 0)
-	assert_eq(dummy.x, dummy.home_x)
+	assert_eq(dummy.x, world.room.spawn_x + SimSetup.DUMMY_OFFSET, "back at its training spot")
 	assert_eq(world.fighters[0].hp, (load(SimSetup.RANGER) as CharacterData).max_hp, "the player is untouched")
 
 
@@ -92,3 +92,45 @@ func test_arrows_hit_the_dummy_from_range_with_hitstun_and_pushback() -> void:
 				assert_eq(dummy.last_damage, world.characters[0].attack * x1.damage_percent / 100)
 	assert_gt(hit_tick, x1.projectiles[0].spawn_tick + 1, "the arrow needs time to fly 5 m")
 	assert_eq(dummy.x, start_x + x1.pushback, "pushed along the arrow's flight")
+
+
+func test_negative_kd_recovery_is_refused() -> void:
+	var dummy: CharacterData = (load(SimSetup.DUMMY) as CharacterData).duplicate() as CharacterData
+	dummy.kd_recovery_per_tick = -1
+	assert_string_contains("; ".join(dummy.validate()), "kd_recovery_per_tick must be >= 0")
+	dummy.kd_recovery_per_tick = 0
+	assert_eq(dummy.validate(), [] as Array[String], "0 disables recovery")
+
+
+func test_last_hitstun_tick_blocks_walking_too() -> void:
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	ranger.hitstun = 1
+	var x: int = ranger.x
+	world.step([InputFrame.from_held(0, 0, InputFrame.RIGHT)] as Array[InputFrame])
+	assert_eq(ranger.x, x, "no walking on the last hitstun tick")
+	assert_eq(ranger.hitstun, 0)
+	world.step([InputFrame.from_held(0, InputFrame.RIGHT, InputFrame.RIGHT)] as Array[InputFrame])
+	assert_gt(ranger.x, x, "free on the next tick")
+
+
+func test_trading_kicks_both_land_in_either_fighter_order() -> void:
+	for order: int in 2:
+		var world: SimWorld = SimSetup.create(&"training", 1)
+		var a: SimFighter = world.fighters[0]
+		var b: SimFighter = world.fighters[1]
+		# Make the dummy a second ranger facing the first one, both mid-z1 on its active tick.
+		b.character = a.character
+		for f: SimFighter in [a, b]:
+			f.move = 0
+			f.move_tick = world.characters[0].moveset.moves[0].startup
+		if order == 1:
+			world.fighters.reverse()
+		world.step([InputFrame.new(0)] as Array[InputFrame])
+		var hits: int = 0
+		for event: SimEvent in world.events:
+			if event.type == &"hit":
+				hits += 1
+		assert_eq(hits, 2, "both hits land (order %d)" % order)
+		assert_eq(a.combo, 1)
+		assert_eq(b.combo, 1)
