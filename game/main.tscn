@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
 [ext_resource type="Script" path="res://game/input/input_hint.gd" id="2_hint"]
@@ -8,6 +8,8 @@
 [ext_resource type="Script" path="res://game/view/side_camera.gd" id="6_camera"]
 [ext_resource type="Script" path="res://game/debug/rec_indicator.gd" id="7_rec_label"]
 [ext_resource type="Script" path="res://game/view/projectile_view.gd" id="8_arrows"]
+[ext_resource type="Script" path="res://game/debug/data_reloader.gd" id="8_reloader"]
+[ext_resource type="Script" path="res://game/debug/reload_toast.gd" id="9_toast"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
 sky_top_color = Color(0.32, 0.55, 0.85, 1)
@@ -33,6 +35,9 @@ setup = &"training"
 
 [node name="ReplayRecorder" type="Node" parent="SimDriver"]
 script = ExtResource("3_rec")
+
+[node name="DataReloader" type="Node" parent="SimDriver"]
+script = ExtResource("8_reloader")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")
@@ -103,3 +108,13 @@ grow_horizontal = 0
 horizontal_alignment = 2
 script = ExtResource("7_rec_label")
 recorder = NodePath("../../SimDriver/ReplayRecorder")
+
+[node name="ReloadToast" type="Label" parent="Hud" node_paths=PackedStringArray("reloader")]
+offset_left = 12.0
+offset_top = 40.0
+offset_right = 700.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 15
+autowrap_mode = 3
+script = ExtResource("9_toast")
+reloader = NodePath("../../SimDriver/DataReloader")
