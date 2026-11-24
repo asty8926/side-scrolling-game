@@ -42,7 +42,7 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	var move: MoveData = current_move(world, f)
 	if move != null and f.move_tick >= move.length():
 		if move.turn_at_end:
-			f.facing = -f.facing
+			_face_hit_targets(world, f)
 		f.move = SimFighter.NO_MOVE
 		f.move_tick = 0
 		f.idle_ticks = 0
@@ -55,7 +55,7 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 				if next >= 0 and history.buffered_press(_button(moveset.moves[next]), world.input_settings.buffer_ticks):
 					# Same turn as a natural end, so a cancel into ZZZ still faces the target.
 					if move.turn_at_end:
-						f.facing = -f.facing
+						_face_hit_targets(world, f)
 					_start(world, f, next)
 					return
 		return
@@ -108,6 +108,7 @@ static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	var before: int = f.x
 	f.x = clampi(f.x + motion, low, high)
 	_carry(world, f, f.x - before)
+	_complete_pass(world, f)
 
 
 ## Carries fighters already hit by `f`'s current move, by the motion `f`
@@ -132,6 +133,54 @@ static func _already_hit(f: SimFighter, target_id: int) -> bool:
 		if (key & 0xFFFFFFFF) == target_id:
 			return true
 	return false
+
+
+## The already-hit fighter with the lowest id, or null.
+static func _first_hit_target(world: SimWorld, f: SimFighter) -> SimFighter:
+	var found: SimFighter = null
+	for other: SimFighter in world.fighters:
+		if other.id != f.id and _already_hit(f, other.id):
+			if found == null or other.id < found.id:
+				found = other
+	return found
+
+
+## Face a struck target. If the slash could not pass (a wall), this keeps the
+## next Z pointed at them instead of always reversing.
+static func _face_hit_targets(world: SimWorld, f: SimFighter) -> void:
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null or target.x == f.x:
+		return
+	f.facing = 1 if target.x > f.x else -1
+
+
+## After a pass-through hit, close any remaining gap to the far side over the
+## rest of the pass window (clamped at walls and platform edges). A fixed
+## root-motion length alone is not enough when the target is further away.
+static func _complete_pass(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null or not move.passes_at(f.move_tick):
+		return
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null or world.room == null or world.movement == null:
+		return
+	var m: MovementParams = world.movement
+	var low: int = world.room.left + m.half_width
+	var high: int = world.room.right - m.half_width
+	if f.ground >= 0:
+		var platform: RoomPlatform = world.room.platforms[f.ground]
+		low = maxi(low, mini(f.x, platform.left()))
+		high = mini(high, maxi(f.x, platform.right()))
+	var far: int = clampi(target.x + f.facing * (2 * m.half_width), low, high)
+	var remaining: int = move.pass_to - f.move_tick + 1
+	if remaining < 1:
+		return
+	if f.facing > 0 and f.x < far:
+		var step: int = (far - f.x + remaining - 1) / remaining
+		f.x = mini(f.x + step, far)
+	elif f.facing < 0 and f.x > far:
+		var step: int = (f.x - far + remaining - 1) / remaining
+		f.x = maxi(f.x - step, far)
 
 
 ## Step 1b: fighters' pushboxes push each other apart (pairs in fighter order),

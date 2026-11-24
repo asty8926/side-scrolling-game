@@ -109,6 +109,35 @@ func test_slash_next_to_a_wall_stops_before_the_wall() -> void:
 		assert_gte(ranger.x, world.room.left + m.half_width)
 		assert_gte(dummy.x, world.room.left + m.half_width)
 	assert_gte(dummy.combo, 2, "both the slide and the slash landed in the tight space")
+	# Even if the wall blocked a full pass, the next Z must still point at the dummy.
+	if dummy.x != ranger.x:
+		assert_eq(ranger.facing, 1 if dummy.x > ranger.x else -1, "faces the dummy after a wall-blocked slash")
+
+
+func test_slash_from_further_away_still_ends_on_the_far_side() -> void:
+	# A dummy further than the training 1 m still gets crossed: remaining pass
+	# ticks close the gap after the slash lands (clamped at the wall).
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var dummy: SimFighter = world.fighters[1]
+	dummy.x = 1800
+	dummy.home_x = dummy.x
+	ranger.x = 900
+	ranger.facing = SimFighter.RIGHT
+	ranger.dash_dir = SimFighter.RIGHT
+	var previous: int = 0
+	for tick: int in 80:
+		var held: int = 0
+		if tick == 0:
+			held = Z
+		elif tick == 11:
+			held = X
+		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+	assert_gte(dummy.combo, 2, "slide and slash both landed")
+	assert_gt(ranger.x, dummy.x, "still ends on the far side when the dummy starts further away")
+	if dummy.x != ranger.x:
+		assert_eq(ranger.facing, 1 if dummy.x > ranger.x else -1)
 
 
 func test_root_motion_stops_at_a_platform_edge() -> void:
