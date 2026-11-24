@@ -3,8 +3,8 @@ extends Node
 ## Steps the SimWorld exactly once per physics tick (60 Hz, see project.godot).
 ##
 ## It owns the world and exposes it read-only to view and debug nodes. Views
-## read `world` to draw; they never write to it. Inputs are empty until the
-## input issue (#39) adds the per-tick InputFrame collection.
+## read `world` to draw; they never write to it.
+## InputSampler builds each per-tick InputFrame before the sim step.
 
 ## Emitted after each sim tick, with the new tick number.
 signal ticked(tick: int)
@@ -13,12 +13,26 @@ signal ticked(tick: int)
 @export var world_seed: int = 1
 
 var world: SimWorld = SimWorld.new(1)
+var input_settings: InputSettings
+var _sampler: InputSampler
 
 
 func _ready() -> void:
 	if Engine.physics_ticks_per_second != SimUnits.TICKS_PER_SECOND:
 		push_error("SimDriver: physics_ticks_per_second is %d, the sim expects %d" % [Engine.physics_ticks_per_second, SimUnits.TICKS_PER_SECOND])
 	world = SimWorld.new(world_seed)
+	input_settings = load("res://data/input_settings.tres") as InputSettings
+	if input_settings == null:
+		push_error("SimDriver: failed to load res://data/input_settings.tres")
+		set_physics_process(false)
+		return
+	var problems: Array[String] = input_settings.validate()
+	if not problems.is_empty():
+		push_error("SimDriver: invalid input settings: %s" % "; ".join(problems))
+		set_physics_process(false)
+		return
+	_sampler = InputSampler.new()
+	add_child(_sampler)
 
 
 func _physics_process(_delta: float) -> void:
@@ -33,4 +47,7 @@ func step_once() -> void:
 
 
 func _collect_inputs() -> Array[InputFrame]:
-	return []
+	var frames: Array[InputFrame] = []
+	if _sampler != null:
+		frames.append(_sampler.sample_tick())
+	return frames
