@@ -61,3 +61,14 @@ func test_camera_dead_zone_and_room_clamp() -> void:
 	assert_almost_eq(camera.desired_position(Vector3(0.8, 0.0, 0.0)).x, 0.0, 0.0001, "inside the dead zone the camera stays")
 	assert_almost_eq(camera.desired_position(Vector3(3.0, 0.0, 0.0)).x, 2.0, 0.0001, "past the dead zone it follows at the edge")
 	assert_almost_eq(camera.desired_position(Vector3(3.0, 0.0, 0.0)).z, camera.distance, 0.0001, "fixed distance on Z")
+
+
+func test_wall_margin_shrinks_in_narrow_windows() -> void:
+	var camera: SideCamera = SideCamera.new()
+	add_child_autofree(camera)
+	camera.wall_margin = 8.0
+	camera.edge_padding = 1.0
+	var half: float = camera.visible_half_width()
+	assert_gt(half, 0.0)
+	assert_almost_eq(camera.effective_wall_margin(), minf(8.0, half - 1.0), 0.0001, "margin never pushes the wall-side fighter off screen")
+	assert_lte(camera.effective_wall_margin() + 1.0, half + 0.0001)
