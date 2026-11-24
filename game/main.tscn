@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://game/view/projectile_view.gd" id="8_arrows"]
 [ext_resource type="Script" path="res://game/debug/data_reloader.gd" id="8_reloader"]
 [ext_resource type="Script" path="res://game/debug/reload_toast.gd" id="9_toast"]
+[ext_resource type="Script" path="res://game/debug/debug_overlay.gd" id="10_overlay"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
 sky_top_color = Color(0.32, 0.55, 0.85, 1)
@@ -120,3 +121,8 @@ theme_override_font_sizes/font_size = 15
 autowrap_mode = 3
 script = ExtResource("9_toast")
 reloader = NodePath("../../SimDriver/DataReloader")
+
+[node name="DebugOverlay" type="CanvasLayer" parent="." node_paths=PackedStringArray("driver", "world_root")]
+script = ExtResource("10_overlay")
+driver = NodePath("../SimDriver")
+world_root = NodePath("..")

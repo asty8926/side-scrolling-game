@@ -17,6 +17,9 @@ signal stepped(frames: Array[InputFrame])
 @export var setup: StringName = &"test_room"
 
 var world: SimWorld = SimWorld.new(1)
+## Debug: when true the sim does not advance (F2); F3 steps one tick.
+var paused: bool = false
+var _step_requested: bool = false
 var input_settings: InputSettings
 var _sampler: InputSampler
 
@@ -45,11 +48,22 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Debug only: F4 resets the training dummy between two ticks.
-	if OS.is_debug_build() and event.is_action_pressed(&"debug_reset") and not event.is_echo():
+	if not OS.is_debug_build() or event.is_echo():
+		return
+	if event.is_action_pressed(&"debug_reset"):
 		world.reset_dummies()
+	elif event.is_action_pressed(&"debug_pause"):
+		paused = not paused
+	elif event.is_action_pressed(&"debug_step"):
+		paused = true
+		_step_requested = true
 
 
 func _physics_process(_delta: float) -> void:
+	# Pausing skips sim steps (not Engine.time_scale), so a step is exactly one tick.
+	if paused and not _step_requested:
+		return
+	_step_requested = false
 	step_once()
 
 
