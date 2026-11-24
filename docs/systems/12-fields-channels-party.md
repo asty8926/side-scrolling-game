@@ -4,6 +4,7 @@ system: fields-channels-party
 priority: P2
 milestone: M5 (party co-op), Later (fields, channels)
 status: draft
+issue: 12
 sources:
   - https://elwiki.net/w/Hunting_Fields
   - https://elwiki.net/w/UI_Guide
@@ -14,6 +15,8 @@ sources:
 ---
 
 # Hunting fields, channels, parties
+
+> Tracking issue: [#12](https://github.com/asty8926/side-scrolling-game/issues/12) · Milestone epic: [#22](https://github.com/asty8926/side-scrolling-game/issues/22)
 
 ## What it is in Elsword
 

@@ -4,6 +4,7 @@ system: combat-inputs
 priority: P0
 milestone: M0 (inputs, movement), M1 (full command list)
 status: draft
+issue: 1
 sources:
   - https://elwiki.net/w/Commands
   - https://elwiki.net/w/Rena
@@ -14,6 +15,8 @@ sources:
 ---
 
 # Basic combos and command inputs
+
+> Tracking issue: [#1](https://github.com/asty8926/side-scrolling-game/issues/1) · Milestone epic: [#17](https://github.com/asty8926/side-scrolling-game/issues/17)
 
 ## Notation used in all docs
 

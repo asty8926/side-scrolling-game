@@ -4,6 +4,7 @@ system: henir
 priority: P3
 milestone: Later (after M5)
 status: draft
+issue: 10
 sources:
   - https://elwiki.net/w/Henir%27s_Time_and_Space
   - https://elwiki.net/w/Henir%27s_Time_and_Space/Season_2
@@ -12,6 +13,8 @@ sources:
 ---
 
 # Henir's Time and Space
+
+> Tracking issue: [#10](https://github.com/asty8926/side-scrolling-game/issues/10) · Milestone epic: [#23](https://github.com/asty8926/side-scrolling-game/issues/23)
 
 ## What it is in Elsword
 

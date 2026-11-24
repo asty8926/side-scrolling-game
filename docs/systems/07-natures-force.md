@@ -4,6 +4,7 @@ system: natures-force
 priority: P1
 milestone: M4
 status: draft
+issue: 7
 sources:
   - https://elwiki.net/w/Nature%27s_Force_System
   - https://elwiki.net/w/Rena
@@ -11,6 +12,8 @@ sources:
 ---
 
 # Nature's Force (NF)
+
+> Tracking issue: [#7](https://github.com/asty8926/side-scrolling-game/issues/7) · Milestone epic: [#21](https://github.com/asty8926/side-scrolling-game/issues/21)
 
 ## What it is in Elsword
 

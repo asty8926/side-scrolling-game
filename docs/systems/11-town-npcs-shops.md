@@ -4,6 +4,7 @@ system: town
 priority: P1
 milestone: M3
 status: draft
+issue: 11
 sources:
   - https://elwiki.net/w/Elder_Village
   - https://elwiki.net/w/NPCs
@@ -16,6 +17,8 @@ sources:
 ---
 
 # Town: NPCs, dialogues, shops
+
+> Tracking issue: [#11](https://github.com/asty8926/side-scrolling-game/issues/11) · Milestone epic: [#20](https://github.com/asty8926/side-scrolling-game/issues/20)
 
 ## What it is in Elsword
 

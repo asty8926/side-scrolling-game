@@ -4,6 +4,7 @@ system: night-watcher-slide-x
 priority: P0
 milestone: M0 (rough), M1 (polished)
 status: draft
+issue: 4
 sources:
   - https://elwiki.net/w/Trapping_Ranger
   - https://elwiki.net/w/Night_Watcher
@@ -12,6 +13,8 @@ sources:
 ---
 
 # `>>ZX` (Asty's `>>WX`): slide kick, then slash through
+
+> Tracking issue: [#4](https://github.com/asty8926/side-scrolling-game/issues/4) · Milestone epic: [#17](https://github.com/asty8926/side-scrolling-game/issues/17)
 
 ## What it is in Elsword
 

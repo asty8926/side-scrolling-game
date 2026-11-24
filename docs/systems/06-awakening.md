@@ -4,6 +4,7 @@ system: awakening
 priority: P1
 milestone: M4
 status: draft
+issue: 6
 sources:
   - https://elwiki.net/w/Awakening_Mode
   - https://elwiki.net/w/Statistics
@@ -14,6 +15,8 @@ sources:
 ---
 
 # Awakening Mode
+
+> Tracking issue: [#6](https://github.com/asty8926/side-scrolling-game/issues/6) · Milestone epic: [#21](https://github.com/asty8926/side-scrolling-game/issues/21)
 
 Note: `https://elwiki.net/w/Awakening` currently redirects to an unrelated skill page ("Enlightenment", an Apostasia passive). The correct page is **`Awakening_Mode`**.
 

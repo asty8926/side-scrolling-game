@@ -4,6 +4,7 @@ system: combo-loops
 priority: P0
 milestone: M1
 status: draft
+issue: 3
 sources:
   - https://elwiki.net/w/Knockdown
   - https://elwiki.net/w/Trapping_Ranger
@@ -13,6 +14,8 @@ sources:
 ---
 
 # The `ZZZ<<>` loop and infinite combo cycles
+
+> Tracking issue: [#3](https://github.com/asty8926/side-scrolling-game/issues/3) · Milestone epic: [#18](https://github.com/asty8926/side-scrolling-game/issues/18)
 
 Depends on: [01-combat-inputs.md](01-combat-inputs.md), [02-kd-knockdown.md](02-kd-knockdown.md), [05-game-feel.md](05-game-feel.md).
 
