@@ -138,6 +138,12 @@ func replace_character(index: int, data: CharacterData) -> Array[String]:
 			fighter.move = SimFighter.NO_MOVE
 			fighter.move_tick = 0
 			fighter.hit_keys.clear()
+	# Arrows in flight whose projectile entry no longer exists vanish.
+	var alive: Array[SimProjectile] = []
+	for projectile: SimProjectile in projectiles:
+		if projectile.character != index or SimCombat.projectile_data(self, projectile) != null:
+			alive.append(projectile)
+	projectiles = alive
 	return problems
 
 

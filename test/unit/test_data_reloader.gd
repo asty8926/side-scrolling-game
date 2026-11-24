@@ -58,3 +58,30 @@ func test_watched_paths_cover_the_room_data() -> void:
 	assert_has(paths, SimSetup.TEST_ROOM)
 	assert_has(paths, SimSetup.RANGER_MOVEMENT)
 	assert_has(paths, SimSetup.INPUT_SETTINGS)
+
+
+func _fire_arrow() -> void:
+	var previous: int = 0
+	for tick: int in 8:
+		var held: int = InputFrame.X if tick == 0 else 0
+		_driver.world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+	assert_eq(_driver.world.projectiles.size(), 1, "an arrow is in flight")
+
+
+func test_arrow_speed_change_applies_to_an_arrow_in_flight() -> void:
+	_fire_arrow()
+	_save_with(func(moves: MoveSet) -> void: moves.moves[4].projectiles[0].speed = 1000)
+	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
+	var x_before: int = _driver.world.projectiles[0].x
+	_driver.world.step([InputFrame.from_held(0, 0, 0)] as Array[InputFrame])
+	assert_eq(_driver.world.projectiles[0].x - x_before, 1000, "flies at the new speed")
+
+
+func test_removed_projectile_entry_drops_its_arrow_in_flight() -> void:
+	_fire_arrow()
+	_save_with(func(moves: MoveSet) -> void: moves.moves[4].projectiles.clear())
+	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
+	assert_eq(_driver.world.projectiles.size(), 0, "no arrow without data")
+	_driver.world.step([InputFrame.from_held(0, 0, 0)] as Array[InputFrame])
+	assert_eq(_driver.world.projectiles.size(), 0)
