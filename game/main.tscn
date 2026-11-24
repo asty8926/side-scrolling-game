@@ -1,48 +1,78 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
-
 [ext_resource type="Script" path="res://game/input/input_hint.gd" id="2_hint"]
-
 [ext_resource type="Script" path="res://game/debug/replay_recorder.gd" id="3_rec"]
+[ext_resource type="Script" path="res://game/view/room_view.gd" id="4_room"]
+[ext_resource type="Script" path="res://game/view/fighter_view.gd" id="5_fighter"]
+[ext_resource type="Script" path="res://game/view/side_camera.gd" id="6_camera"]
 
-[node name="Main" type="Control"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[sub_resource type="ProceduralSkyMaterial" id="sky_material"]
+sky_top_color = Color(0.32, 0.55, 0.85, 1)
+sky_horizon_color = Color(0.78, 0.86, 0.95, 1)
+ground_bottom_color = Color(0.25, 0.28, 0.22, 1)
+ground_horizon_color = Color(0.7, 0.75, 0.7, 1)
 
-[node name="Title" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -20.0
-offset_right = 160.0
-offset_bottom = 20.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 28
-text = "side-scrolling-game M0"
-horizontal_alignment = 1
-vertical_alignment = 1
+[sub_resource type="Sky" id="sky"]
+sky_material = SubResource("sky_material")
+
+[sub_resource type="Environment" id="environment"]
+background_mode = 2
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_energy = 0.4
+tonemap_mode = 3
+
+[node name="Main" type="Node3D"]
 
 [node name="SimDriver" type="Node" parent="."]
 script = ExtResource("1_driver")
 
-[node name="InputHint" type="Label" parent="."]
+[node name="ReplayRecorder" type="Node" parent="SimDriver"]
+script = ExtResource("3_rec")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("environment")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 10, 6)
+light_energy = 0.8
+shadow_enabled = true
+
+[node name="RoomView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("4_room")
+driver = NodePath("../SimDriver")
+
+[node name="FighterView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("5_fighter")
+driver = NodePath("../SimDriver")
+
+[node name="SideCamera" type="Camera3D" parent="." node_paths=PackedStringArray("target", "driver")]
+transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 2.2, 11)
+current = true
+fov = 50.0
+script = ExtResource("6_camera")
+target = NodePath("../FighterView")
+driver = NodePath("../SimDriver")
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="Title" type="Label" parent="Hud"]
+offset_left = 12.0
+offset_top = 8.0
+offset_right = 400.0
+offset_bottom = 36.0
+text = "side-scrolling-game M0 - test room"
+
+[node name="InputHint" type="Label" parent="Hud"]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -50.0
+offset_top = -48.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
+autowrap_mode = 3
 script = ExtResource("2_hint")
-
-[node name="ReplayRecorder" type="Node" parent="SimDriver"]
-script = ExtResource("3_rec")
