@@ -170,8 +170,15 @@ func replace_static(room_layout: RoomLayout, movement_params: MovementParams, se
 			if fighter.ground >= room.platforms.size():
 				fighter.ground = SimFighter.IN_AIR
 			elif fighter.ground >= 0:
-				# Stand on the new top (a moved platform or a new tier height).
-				fighter.y = room.platforms[fighter.ground].top(room.floor_y, tier_height)
+				var platform: RoomPlatform = room.platforms[fighter.ground]
+				if fighter.x + movement.half_width < platform.left() or fighter.x - movement.half_width > platform.right():
+					# The platform moved away: fall from where the fighter was.
+					fighter.ground = SimFighter.IN_AIR
+					fighter.vy = 0
+					fighter.air_jumps = 1
+				else:
+					# Stand on the new top (a new tier or tier height).
+					fighter.y = platform.top(room.floor_y, tier_height)
 			elif fighter.ground == SimFighter.ON_FLOOR:
 				fighter.y = room.floor_y
 	return problems

@@ -131,6 +131,7 @@ func test_room_reload_redraws_the_room_and_reseats_standing_fighters() -> void:
 	_reloader.room_view = view
 	var fighter: SimFighter = _driver.world.fighters[0]
 	fighter.ground = 0
+	fighter.x = _driver.world.room.platforms[0].x
 	var room: RoomLayout = _driver.world.room.duplicate(true) as RoomLayout
 	room.platforms[0].x += 1000
 	room.platforms[0].tier += 1
@@ -150,3 +151,20 @@ func test_toast_keeps_an_error_visible_after_a_later_success() -> void:
 	toast._on_reloaded("res://movement.tres", [] as Array[String])
 	assert_string_contains(toast.text, "room.tres NOT reloaded")
 	assert_string_contains(toast.text, "Reloaded movement.tres")
+
+
+func test_a_platform_moved_away_drops_its_fighter_from_the_old_height() -> void:
+	var fighter: SimFighter = _driver.world.fighters[0]
+	var world: SimWorld = _driver.world
+	fighter.ground = 0
+	fighter.x = world.room.platforms[0].x
+	fighter.y = world.room.platforms[0].top(world.room.floor_y, world.tier_height)
+	var old_y: int = fighter.y
+	var room: RoomLayout = world.room.duplicate(true) as RoomLayout
+	var center: int = (world.room.left + world.room.right) / 2
+	var away: int = room.platforms[0].width + 2 * world.movement.half_width + 100
+	room.platforms[0].x += away if room.platforms[0].x < center else -away
+	room.platforms[0].tier += 1
+	assert_eq(world.replace_static(room, world.movement, world.input_settings), [] as Array[String])
+	assert_eq(fighter.ground, SimFighter.IN_AIR, "no longer supported")
+	assert_eq(fighter.y, old_y, "falls from where it was")
