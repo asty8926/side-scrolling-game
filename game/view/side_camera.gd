@@ -74,33 +74,37 @@ func desired_position(target_position: Vector3) -> Vector3:
 	var y: float = target_position.y + height_offset
 	var room: RoomLayout = _room()
 	if room != null:
-		var margin: float = effective_wall_margin()
-		var left: float = SimUnits.to_meters(room.left) + margin
-		var right: float = SimUnits.to_meters(room.right) - margin
-		x = (left + right) * 0.5 if left > right else clampf(x, left, right)
 		var low: float = SimUnits.to_meters(room.floor_y) + min_height_above_floor
 		var high: float = maxf(low, SimUnits.to_meters(room.top) - top_margin)
 		y = clampf(y, low, high)
+		# Margin from the real camera-to-target height after the vertical clamp.
+		var margin: float = effective_wall_margin(y - target_position.y)
+		var left: float = SimUnits.to_meters(room.left) + margin
+		var right: float = SimUnits.to_meters(room.right) - margin
+		x = (left + right) * 0.5 if left > right else clampf(x, left, right)
 	return Vector3(x, y, distance)
 
 
-## Half of the visible width on the gameplay plane (z = 0), in meters, for the
-## current window shape (recomputed every frame, so resizing is handled).
-func visible_half_width() -> float:
+## Half of the visible width at the target's depth along the view axis, in
+## meters, for the current window shape (recomputed every frame, so resizing
+## is handled). `vertical_offset` is camera y minus target y.
+func visible_half_width(vertical_offset: float = height_offset) -> float:
 	var aspect: float = 16.0 / 9.0
 	if is_inside_tree():
 		var view_size: Vector2 = get_viewport().get_visible_rect().size
 		if view_size.x > 0.0 and view_size.y > 0.0:
 			aspect = view_size.x / view_size.y
-	var half_fov: float = tan(deg_to_rad(fov) * 0.5) * distance
+	var pitch: float = deg_to_rad(pitch_degrees)
+	var depth: float = maxf(0.1, distance * cos(pitch) + vertical_offset * sin(pitch))
+	var half_fov: float = tan(deg_to_rad(fov) * 0.5) * depth
 	# KEEP_HEIGHT: fov is vertical; KEEP_WIDTH: fov is horizontal.
 	return half_fov * aspect if keep_aspect == KEEP_HEIGHT else half_fov
 
 
 ## wall_margin, reduced so a fighter against a wall stays edge_padding inside
 ## the screen even in a narrow window.
-func effective_wall_margin() -> float:
-	return clampf(visible_half_width() - edge_padding, 0.0, wall_margin)
+func effective_wall_margin(vertical_offset: float = height_offset) -> float:
+	return clampf(visible_half_width(vertical_offset) - edge_padding, 0.0, wall_margin)
 
 
 func _room() -> RoomLayout:

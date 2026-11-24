@@ -72,3 +72,14 @@ func test_wall_margin_shrinks_in_narrow_windows() -> void:
 	assert_gt(half, 0.0)
 	assert_almost_eq(camera.effective_wall_margin(), minf(8.0, half - 1.0), 0.0001, "margin never pushes the wall-side fighter off screen")
 	assert_lte(camera.effective_wall_margin() + 1.0, half + 0.0001)
+
+
+func test_wall_margin_uses_the_view_axis_depth_at_steep_pitch() -> void:
+	var camera: SideCamera = SideCamera.new()
+	add_child_autofree(camera)
+	camera.pitch_degrees = -30.0
+	var flat: SideCamera = SideCamera.new()
+	add_child_autofree(flat)
+	flat.pitch_degrees = 0.0
+	assert_lt(camera.visible_half_width(), flat.visible_half_width(), "looking up from above the target sees less width at its depth")
+	assert_lte(camera.effective_wall_margin() + camera.edge_padding, camera.visible_half_width() + 0.0001)
