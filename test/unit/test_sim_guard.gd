@@ -22,10 +22,29 @@ func test_guard_catches_each_forbidden_pattern() -> void:
 		"var pos: Vector3 = Vector3.ZERO",
 		"var half := 0.5",
 		"var k: bool = Input.is_action_pressed(\"z\")",
+		"var roll: int = int(randfn(0.0, 1.0))",
+		"extends CharacterBody2D",
+		"extends \"res://game/view/thing.gd\"",
+		"var position := Vector2()",
+		"var speed := float(3)",
 	]
 	for line: String in bad_lines:
 		var problems: Array[String] = SimGuard.scan_source("res://fake.gd", line)
 		assert_gt(problems.size(), 0, "guard flags: %s" % line)
+
+
+func test_guard_allows_refcounted_and_resource_bases() -> void:
+	for line: String in ["extends RefCounted", "extends Resource", "extends SimEntity"]:
+		assert_eq(SimGuard.scan_source("res://fake.gd", line).size(), 0, "allowed: %s" % line)
+
+
+func test_guard_ignores_multiline_strings_but_sees_code_after() -> void:
+	var quotes: String = "\"\"\""
+	var source: String = "const HELP: String = %s\nNever call randi() or $Player.\n%s\nvar n: int = randi()\n" % [quotes, quotes]
+	var problems: Array[String] = SimGuard.scan_source("res://fake.gd", source)
+	assert_eq(problems.size(), 1, "only the real call is flagged: %s" % "\n".join(problems))
+	if problems.size() == 1:
+		assert_string_contains(problems[0], "fake.gd:4:")
 
 
 func test_guard_ignores_comments_and_strings() -> void:
