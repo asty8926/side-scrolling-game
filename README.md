@@ -17,7 +17,7 @@ No coding needed. You only install Godot once.
 1. **Install Godot 4.7.2** (free): download "Godot Engine - macOS" for **4.7.2-stable** from the [official release page](https://github.com/godotengine/godot/releases/tag/4.7.2-stable) (file `Godot_v4.7.2-stable_macos.universal.zip`), unzip it and drag `Godot.app` into Applications. Use exactly this version: newer or older ones may change things.
 2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it).
 3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files.
-4. **Run the project**: press **F5** (or the ▶ Play button, top right). For now a window opens with the text "side-scrolling-game M0". That's expected: the next issues add the test room and the character.
+4. **Run the project**: press **F5** (or the ▶ Play button, top right). For now a window opens with the text "side-scrolling-game M0" (the simulation already ticks 60 times per second behind it, with nothing in it yet). That's expected: the next issues add your keys, movement, the test room and the character.
 
 ### Run tests
 
@@ -35,7 +35,7 @@ No coding needed. You only install Godot once.
 | Folder | What lives there |
 |---|---|
 | `game/` | Scenes and scripts of the game. `game/main.tscn` is the scene that opens when you press Play. |
-| `game/sim/` | The deterministic combat simulation: plain typed GDScript, no nodes, no scene tree, integer math only, 60 ticks per second. |
+| `game/sim/` | The deterministic combat simulation: plain typed GDScript, no nodes, no scene tree, integer math only (1 m = 1000 sub-units), 60 ticks per second, seeded RNG, hashable snapshots. Rules: [game/sim/README.md](game/sim/README.md). `game/sim_driver.gd` steps it once per physics tick. |
 | `game/view/` | 3D display: reads the simulation state and draws it (never changes it). |
 | `game/debug/` | Debug tools: overlays, readouts. |
 | `data/` | Game data as text Resources (`.tres`): moves, hitboxes, enemies, rooms... editable in Godot's Inspector. |
