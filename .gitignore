@@ -1,0 +1,13 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Export output (local builds)
+/build/
+
+# Test reports
+/reports/
+
+# OS junk
+.DS_Store
+Thumbs.db
