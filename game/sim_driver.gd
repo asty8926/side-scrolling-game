@@ -8,9 +8,13 @@ extends Node
 
 ## Emitted after each sim tick, with the new tick number.
 signal ticked(tick: int)
+## Emitted after each sim tick with the input frames that tick consumed.
+signal stepped(frames: Array[InputFrame])
 
 ## Seed of the world created when this node enters the tree.
 @export var world_seed: int = 1
+## Which SimSetup builds the world (static data + initial entities).
+@export var setup: StringName = &"empty"
 
 var world: SimWorld = SimWorld.new(1)
 var input_settings: InputSettings
@@ -20,7 +24,11 @@ var _sampler: InputSampler
 func _ready() -> void:
 	if Engine.physics_ticks_per_second != SimUnits.TICKS_PER_SECOND:
 		push_error("SimDriver: physics_ticks_per_second is %d, the sim expects %d" % [Engine.physics_ticks_per_second, SimUnits.TICKS_PER_SECOND])
-	world = SimWorld.new(world_seed)
+	var created: SimWorld = SimSetup.create(setup, world_seed)
+	if created == null:
+		set_physics_process(false)
+		return
+	world = created
 	input_settings = load("res://data/input_settings.tres") as InputSettings
 	if input_settings == null:
 		push_error("SimDriver: failed to load res://data/input_settings.tres")
@@ -44,6 +52,7 @@ func step_once() -> void:
 	var inputs: Array[InputFrame] = _collect_inputs()
 	world.step(inputs)
 	ticked.emit(world.tick)
+	stepped.emit(inputs)
 
 
 func _collect_inputs() -> Array[InputFrame]:

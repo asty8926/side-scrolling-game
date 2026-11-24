@@ -30,6 +30,9 @@ var input_digest: int = 0
 ## when a new player index first sends input; every known player gets one
 ## frame per tick (an empty one when nothing was sent).
 var histories: Array[InputHistory] = []
+## Events emitted during the last step() (cleared at the start of each step).
+## Output only, not part of the snapshot or hash.
+var events: Array[SimEvent] = []
 ## Entities in stable insertion order.
 var entities: Array[SimEntity] = []
 var _next_entity_id: int = 1
@@ -57,6 +60,7 @@ func add_entity(entity: SimEntity) -> int:
 ## Invalid frames (player outside [0, MAX_PLAYERS), unknown button bits, a
 ## second frame for the same player) are reported and ignored.
 func step(inputs: Array[InputFrame]) -> void:
+	events.clear()
 	var ordered: Array[InputFrame] = []
 	for frame: InputFrame in inputs:
 		if frame.player < 0 or frame.player >= MAX_PLAYERS or not frame.is_valid():
@@ -96,6 +100,11 @@ func step(inputs: Array[InputFrame]) -> void:
 		entity.y += entity.vy
 
 	tick += 1
+
+
+## Records an event for this tick (used by sim systems).
+func emit_event(type: StringName, actor: int = 0, target: int = 0, move_id: StringName = &"") -> void:
+	events.append(SimEvent.new(tick, type, actor, target, move_id))
 
 
 ## Serializes the whole state in a fixed field order (little-endian).
