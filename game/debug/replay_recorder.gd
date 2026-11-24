@@ -56,7 +56,9 @@ func stop_and_save() -> String:
 	var replay: Replay = _replay
 	_replay = null
 	_live_hash_at_end = _driver.world.state_hash()
-	ReplayRunner.bake_expectations(replay)
+	if not ReplayRunner.bake_expectations(replay):
+		push_error("ReplayRecorder: cannot re-run the recording, not saved")
+		return ""
 	if replay.expected_final_hash != _live_hash_at_end:
 		push_error("ReplayRecorder: replaying the recording does not reproduce the live game (desync): live %s, replay %s" % [_live_hash_at_end, replay.expected_final_hash])
 	var err: Error = DirAccess.make_dir_recursive_absolute(SAVE_DIR)

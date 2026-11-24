@@ -27,10 +27,17 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 
 	# Dash start / reverse / stop.
 	var started: int = 0
-	if history.double_tap(InputFrame.RIGHT, window):
-		started = SimFighter.RIGHT
-	elif history.double_tap(InputFrame.LEFT, window):
-		started = SimFighter.LEFT
+	var reverse_press: bool = false
+	if f.dash_dir != 0:
+		var against: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+		reverse_press = (pressed & against) != 0
+	# An opposite press during a dash is always the reverse (below), even when it
+	# also completes a double tap.
+	if not reverse_press:
+		if history.double_tap(InputFrame.RIGHT, window):
+			started = SimFighter.RIGHT
+		elif history.double_tap(InputFrame.LEFT, window):
+			started = SimFighter.LEFT
 	var reversed: bool = false
 	if started != 0:
 		f.dash_dir = started
@@ -92,7 +99,10 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	f.vy = maxi(f.vy - m.gravity, -m.max_fall_speed)
 	var old_y: int = f.y
 	var new_y: int = f.y + f.vy
-	if f.drop_ticks > 0:
+	# Platforms are ignored on every tick the drop timer is running, including
+	# the drop tick itself (so drop_ticks = 1 still falls through).
+	var dropping: bool = f.drop_ticks > 0
+	if dropping:
 		f.drop_ticks -= 1
 	var landed_on: int = SimFighter.IN_AIR
 	var landed_y: int = new_y
@@ -100,7 +110,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		if new_y <= room.floor_y:
 			landed_on = SimFighter.ON_FLOOR
 			landed_y = room.floor_y
-		if f.drop_ticks == 0:
+		if not dropping:
 			var tier_height: int = world.tier_height
 			for i: int in room.platforms.size():
 				var platform: RoomPlatform = room.platforms[i]

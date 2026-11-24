@@ -27,7 +27,10 @@ func _init() -> void:
 		var frame: InputFrame = InputFrame.from_held(0, previous, held)
 		replay.append_frame(frame)
 		previous = held
-	ReplayRunner.bake_expectations(replay)
+	if not ReplayRunner.bake_expectations(replay):
+		push_error("make_example_replay: baking failed, nothing saved")
+		quit(1)
+		return
 	var err: Error = ResourceSaver.save(replay, PATH)
 	if err != OK:
 		push_error("make_example_replay: cannot save %s: %s" % [PATH, error_string(err)])

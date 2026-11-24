@@ -59,8 +59,11 @@ func configure(room_layout: RoomLayout, movement_params: MovementParams, setting
 	if room_layout == null or movement_params == null or settings == null:
 		problems.append("room, movement and input settings are required")
 		return problems
-	problems.append_array(movement_params.validate())
-	problems.append_array(room_layout.validate(movement_params))
+	var movement_problems: Array[String] = movement_params.validate()
+	problems.append_array(movement_problems)
+	# Room checks derive the tier height from the jump, which needs valid movement.
+	if movement_problems.is_empty():
+		problems.append_array(room_layout.validate(movement_params))
 	problems.append_array(settings.validate())
 	if problems.is_empty():
 		room = room_layout
@@ -71,10 +74,13 @@ func configure(room_layout: RoomLayout, movement_params: MovementParams, setting
 
 
 ## Adds a fighter for `player` standing on the floor at the room spawn.
-## Returns its id, or -1 when the world has no room configured.
+## Returns its id, or -1 when the world has no room configured or is full.
 func add_fighter(player: int) -> int:
 	if room == null or movement == null:
 		push_error("SimWorld.add_fighter: configure() the world first")
+		return -1
+	if fighters.size() >= MAX_PLAYERS:
+		push_error("SimWorld.add_fighter: at most %d fighters fit in a snapshot" % MAX_PLAYERS)
 		return -1
 	var fighter: SimFighter = SimFighter.new()
 	fighter.id = _next_entity_id

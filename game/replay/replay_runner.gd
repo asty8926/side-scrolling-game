@@ -63,7 +63,9 @@ static func run(replay: Replay) -> Result:
 
 
 ## Fills the replay's expectations from an actual run (used when recording).
-static func bake_expectations(replay: Replay, checkpoint_every: int = 60) -> void:
+## Returns false, leaving the expectations empty, when the run cannot start
+## (invalid replay, setup or start snapshot).
+static func bake_expectations(replay: Replay, checkpoint_every: int = 60) -> bool:
 	replay.checkpoint_ticks = PackedInt64Array()
 	replay.checkpoint_hashes = PackedStringArray()
 	replay.expected_final_hash = ""
@@ -73,6 +75,10 @@ static func bake_expectations(replay: Replay, checkpoint_every: int = 60) -> voi
 		replay.checkpoint_ticks.append(t)
 		replay.checkpoint_hashes.append("")
 	var first: Result = run(replay)
+	if first.world == null:
+		push_error("ReplayRunner.bake_expectations: %s" % "; ".join(first.problems))
+		return false
 	replay.checkpoint_hashes = first.checkpoint_hashes
 	replay.expected_final_hash = first.final_hash
 	replay.expected_events = first.events
+	return true

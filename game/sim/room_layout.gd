@@ -33,6 +33,9 @@ func validate(movement: MovementParams) -> Array[String]:
 		problems.append("spawn_x is outside the room")
 	if tier_percent < 1 or tier_percent >= 100:
 		problems.append("tier_percent must be in [1, 99]")
+	var tier: int = tier_height(movement)
+	if tier <= 0:
+		problems.append("derived tier height is %d; raise jump_velocity or tier_percent" % tier)
 	for i: int in platforms.size():
 		var platform: RoomPlatform = platforms[i]
 		if platform == null:
@@ -40,6 +43,6 @@ func validate(movement: MovementParams) -> Array[String]:
 			continue
 		for problem: String in platform.validate():
 			problems.append("platform %d: %s" % [i, problem])
-		if platform.left() < left or platform.right() > right or platform.top(floor_y, tier_height(movement)) > top:
+		if platform.left() < left or platform.right() > right or platform.top(floor_y, tier) > top:
 			problems.append("platform %d is outside the room" % i)
 	return problems

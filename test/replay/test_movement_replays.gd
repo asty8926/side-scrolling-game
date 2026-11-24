@@ -161,3 +161,71 @@ func test_platform_top_is_measured_from_the_room_floor() -> void:
 	var platform: RoomPlatform = RoomPlatform.new()
 	platform.tier = 2
 	assert_eq(platform.top(1000, 2150), 5300, "tier 2 sits two tiers above a floor at y=1000")
+
+
+func test_opposite_press_during_dash_reverses_even_after_a_double_tap() -> void:
+	# > then << dashes left; the next > also completes a > > double tap, but
+	# during a dash it must reverse, not start a right dash.
+	var result: ReplayRunner.Result = _run([[R, 1], [0, 1], [L, 1], [0, 1], [L, 3], [R, 1]])
+	assert_eq(_events_of(result, "dash").size(), 1, "only the left dash started")
+	assert_eq(_events_of(result, "dash_reverse").size(), 1, "the > press reversed")
+	var f: SimFighter = _fighter(result)
+	assert_eq(f.vx, 0, "zero speed on the reverse tick")
+	assert_eq(f.dash_dir, 0)
+
+
+func test_drop_with_a_one_tick_timer_still_falls_through() -> void:
+	var movement: MovementParams = (load(SimSetup.RANGER_MOVEMENT) as MovementParams).duplicate() as MovementParams
+	movement.drop_ticks = 1
+	var world: SimWorld = SimWorld.new(1)
+	var room: RoomLayout = load(SimSetup.TEST_ROOM) as RoomLayout
+	assert_eq(world.configure(room, movement, InputSettings.new()), [] as Array[String])
+	world.add_fighter(0)
+	var previous: int = 0
+	for held: int in [U, U] + _repeat(0, 120) + [D] + _repeat(0, 120):
+		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+	assert_eq(world.fighters[0].ground, SimFighter.ON_FLOOR, "fell through to the floor")
+
+
+func test_configure_rejects_zero_gravity_without_hanging() -> void:
+	var movement: MovementParams = MovementParams.new()
+	movement.gravity = 0
+	var problems: Array[String] = SimWorld.new(1).configure(load(SimSetup.TEST_ROOM) as RoomLayout, movement, InputSettings.new())
+	assert_gt(problems.size(), 0, "invalid movement is reported")
+
+
+func test_configure_rejects_a_jump_that_cannot_rise() -> void:
+	var movement: MovementParams = MovementParams.new()
+	movement.jump_velocity = 10
+	movement.gravity = 10
+	var problems: Array[String] = SimWorld.new(1).configure(load(SimSetup.TEST_ROOM) as RoomLayout, movement, InputSettings.new())
+	assert_gt(problems.size(), 0, "a zero-height jump is rejected")
+
+
+func test_fighters_are_capped_at_the_snapshot_limit() -> void:
+	var world: SimWorld = SimSetup.create(&"empty", 1)
+	assert_eq(world.configure(load(SimSetup.TEST_ROOM) as RoomLayout, load(SimSetup.RANGER_MOVEMENT) as MovementParams, InputSettings.new()), [] as Array[String])
+	for i: int in SimWorld.MAX_PLAYERS:
+		assert_gt(world.add_fighter(i), 0)
+	assert_eq(world.add_fighter(4), -1, "a fifth fighter is refused")
+	assert_push_error_count(1)
+	var copy: SimWorld = SimSetup.create(&"test_room", 1)
+	assert_eq(copy.restore(world.snapshot()), OK, "a full world still restores")
+
+
+func test_bake_refuses_a_replay_that_cannot_start() -> void:
+	var replay: Replay = Replay.new()
+	replay.setup = &"empty"
+	replay.append_frame(InputFrame.new())
+	replay.start_snapshot = PackedByteArray([1, 2, 3])
+	assert_false(ReplayRunner.bake_expectations(replay))
+	assert_push_error_count(2)
+	assert_eq(replay.expected_final_hash, "", "nothing was baked")
+
+
+static func _repeat(value: int, count: int) -> Array:
+	var out: Array = []
+	for i: int in count:
+		out.append(value)
+	return out
