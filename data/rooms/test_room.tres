@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://game/sim/room_layout.gd" id="1_room"]
+[ext_resource type="Script" path="res://game/sim/room_platform.gd" id="2_platform"]
+
+[sub_resource type="Resource" id="Platform_left1"]
+script = ExtResource("2_platform")
+x = -7000
+tier = 1
+width = 4500
+
+[sub_resource type="Resource" id="Platform_center1"]
+script = ExtResource("2_platform")
+x = -1000
+tier = 1
+width = 4500
+
+[sub_resource type="Resource" id="Platform_right1"]
+script = ExtResource("2_platform")
+x = 6000
+tier = 1
+width = 5000
+
+[sub_resource type="Resource" id="Platform_center2"]
+script = ExtResource("2_platform")
+x = 500
+tier = 2
+width = 4000
+
+[sub_resource type="Resource" id="Platform_right3"]
+script = ExtResource("2_platform")
+x = 6000
+tier = 3
+width = 4000
+
+[resource]
+script = ExtResource("1_room")
+left = -12000
+right = 12000
+floor_y = 0
+top = 8500
+tier_percent = 85
+platforms = Array[ExtResource("2_platform")]([SubResource("Platform_left1"), SubResource("Platform_center1"), SubResource("Platform_right1"), SubResource("Platform_center2"), SubResource("Platform_right3")])
