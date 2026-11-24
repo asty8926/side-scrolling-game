@@ -121,6 +121,37 @@ func add_character(data: CharacterData) -> int:
 	return characters.size() - 1
 
 
+## Debug hot reload, between ticks: replaces character `index` with `data`
+## if it is valid. Returns the problems (empty = replaced). Fighters playing a
+## move that no longer exists stop it.
+func replace_character(index: int, data: CharacterData) -> Array[String]:
+	var problems: Array[String] = []
+	if index < 0 or index >= characters.size() or data == null:
+		problems.append("no character %d to replace" % index)
+		return problems
+	problems = data.validate()
+	if not problems.is_empty():
+		return problems
+	characters[index] = data
+	for fighter: SimFighter in fighters:
+		if fighter.character == index and fighter.move != SimFighter.NO_MOVE and not _fighter_data_ok(fighter):
+			fighter.move = SimFighter.NO_MOVE
+			fighter.move_tick = 0
+			fighter.hit_keys.clear()
+	return problems
+
+
+## Debug hot reload, between ticks: like configure(), then puts fighters that
+## stood on a platform that no longer exists into the air.
+func replace_static(room_layout: RoomLayout, movement_params: MovementParams, settings: InputSettings) -> Array[String]:
+	var problems: Array[String] = configure(room_layout, movement_params, settings)
+	if problems.is_empty():
+		for fighter: SimFighter in fighters:
+			if fighter.ground >= room.platforms.size():
+				fighter.ground = SimFighter.IN_AIR
+	return problems
+
+
 ## Adds an entity, gives it the next id and returns that id.
 ## Adding the same entity object twice is an error and returns -1.
 func add_entity(entity: SimEntity) -> int:
