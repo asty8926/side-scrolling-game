@@ -45,10 +45,21 @@ var idle_ticks: int = 0
 ## (hitbox index << 32) | target id, for every hit the current move landed:
 ## each hitbox hits each target once per activation.
 var hit_keys: PackedInt64Array = PackedInt64Array()
+var hp: int = 0
+## Ticks left unable to act after being hit.
+var hitstun: int = 0
+## KD gauge (display only in M0: no knockdown yet).
+var kd: int = 0
+## Hits taken in a row while in hitstun (1 = a fresh hit).
+var combo: int = 0
+## Damage of the last hit taken.
+var last_damage: int = 0
+## Where the debug reset puts the fighter back.
+var home_x: int = 0
 
 ## Fixed fields in snapshot order (hit_keys follow as a count + values).
 ## Append new fields at the end and bump SimWorld.SNAPSHOT_VERSION.
-const FIELD_COUNT: int = 15
+const FIELD_COUNT: int = 21
 ## Most hits one move can record (hitboxes x targets).
 const MAX_HIT_KEYS: int = 256
 
@@ -61,8 +72,12 @@ func is_in_move() -> bool:
 	return move != NO_MOVE
 
 
+func is_in_hitstun() -> bool:
+	return hitstun > 0
+
+
 func write_to(buf: StreamPeerBuffer) -> void:
-	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks]:
+	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks, hp, hitstun, kd, combo, last_damage, home_x]:
 		buf.put_64(value)
 	buf.put_32(hit_keys.size())
 	for key: int in hit_keys:
@@ -88,6 +103,12 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 	f.move = buf.get_64()
 	f.move_tick = buf.get_64()
 	f.idle_ticks = buf.get_64()
+	f.hp = buf.get_64()
+	f.hitstun = buf.get_64()
+	f.kd = buf.get_64()
+	f.combo = buf.get_64()
+	f.last_damage = buf.get_64()
+	f.home_x = buf.get_64()
 	var key_count: int = buf.get_32()
 	if key_count < 0 or key_count > MAX_HIT_KEYS or buf.get_available_bytes() < key_count * 8:
 		return null
@@ -97,6 +118,6 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 		return null
 	if f.air_jumps < 0 or absi(f.dash_dir) > 1 or f.drop_ticks < 0:
 		return null
-	if f.move < NO_MOVE or f.move_tick < 0 or f.idle_ticks < 0:
+	if f.move < NO_MOVE or f.move_tick < 0 or f.idle_ticks < 0 or f.hp < 0 or f.hitstun < 0 or f.kd < 0 or f.combo < 0:
 		return null
 	return f

@@ -31,7 +31,13 @@ static func phase(world: SimWorld, f: SimFighter) -> Phase:
 static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) -> void:
 	if f.character >= world.characters.size():
 		return
-	var moveset: MoveSet = world.characters[f.character].moveset
+	var data: CharacterData = world.characters[f.character]
+	if f.hitstun > 0:
+		f.hitstun -= 1
+		f.idle_ticks = 0
+		return  # cannot act in hitstun
+	f.kd = maxi(0, f.kd - data.kd_recovery_per_tick)
+	var moveset: MoveSet = data.moveset
 	if moveset == null:
 		return
 	var move: MoveData = current_move(world, f)
@@ -99,7 +105,9 @@ static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 			if not f.hit_keys.has(key) and overlaps(f, box, target, hurtbox):
 				f.hit_keys.append(key)
 				var attack: int = world.characters[f.character].attack
-				world.emit_hit(f.id, target.id, move, attack * move.damage_percent / 100)
+				var damage: int = attack * move.damage_percent / 100
+				_take_hit(world, f.facing, target, move, damage)
+				world.emit_hit(f.id, target.id, move, damage)
 
 
 ## Step 3: projectiles already in flight move, then hit the first hurtbox they
@@ -192,7 +200,9 @@ static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: Pr
 		return false
 	var move: MoveData = _move(world, projectile)
 	var attack: int = world.characters[projectile.character].attack
-	world.emit_hit(projectile.owner, best.id, move, attack * move.damage_percent / 100)
+	var damage: int = attack * move.damage_percent / 100
+	_take_hit(world, projectile.dir, best, move, damage)
+	world.emit_hit(projectile.owner, best.id, move, damage)
 	return true
 
 
@@ -200,6 +210,23 @@ static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: Pr
 static func advance(f: SimFighter) -> void:
 	if f.move != SimFighter.NO_MOVE:
 		f.move_tick += 1
+
+
+## Target response (#45): damage, hitstun, KD, combo count, pushback along
+## `dir` (the kicker's facing or the arrow's flight). A hit interrupts the
+## target's own move.
+static func _take_hit(world: SimWorld, dir: int, target: SimFighter, move: MoveData, damage: int) -> void:
+	target.combo = target.combo + 1 if target.hitstun > 0 else 1
+	target.hp = maxi(0, target.hp - damage)
+	target.hitstun = move.hitstun_ticks
+	target.kd += move.kd
+	target.last_damage = damage
+	target.move = SimFighter.NO_MOVE
+	target.move_tick = 0
+	target.hit_keys.clear()
+	target.dash_dir = 0
+	var m: MovementParams = world.movement
+	target.x = clampi(target.x + move.pushback * dir, world.room.left + m.half_width, world.room.right - m.half_width)
 
 
 ## Integer AABB overlap (touching edges count as touching/hit).

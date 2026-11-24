@@ -8,6 +8,9 @@ extends Resource
 ## Damage of a 100% hit. # proposal, tune
 @export_range(0, 100000, 1) var attack: int = 100
 @export var hurtbox: HurtboxData
+## KD lost per tick once out of hitstun (placeholder rule until the M1 KD
+## system, docs/systems/02-kd-knockdown.md). # proposal, tune
+@export_range(0, 100, 1, "suffix:/tick") var kd_recovery_per_tick: int = 1
 ## Null for characters that do not attack (the training dummy).
 @export var moveset: MoveSet
 
