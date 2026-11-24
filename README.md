@@ -19,6 +19,23 @@ No coding needed. You only install Godot once.
 3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files.
 4. **Run the project**: press **F5** (or the ▶ Play button, top right). For now a window opens with the text "side-scrolling-game M0" (the simulation already ticks 60 times per second behind it, with nothing in it yet). That's expected: the next issues add your keys, movement, the test room and the character.
 
+### Keys
+
+Keys are bound by **physical position**, so they work on QWERTY and AZERTY with no setup. The bottom of the window shows the labels for *your* keyboard layout.
+
+| Action | QWERTY key | French AZERTY key |
+|---|---|---|
+| Primary attack (`Z` in the docs) | Z | **W** |
+| Secondary attack (`X`) | X | X |
+| Walk / dash (double-tap) | ← → | ← → |
+| Jump / double jump | ↑ | ↑ |
+| Drop through a platform | ↓ | ↓ |
+| Skills 1-4 | A S D C | **Q** S D C |
+| Awakening | Left Ctrl | Left Ctrl |
+| Debug: overlay / reset / record replay | F3 / F4 / F9 | F3 / F4 / F9 |
+
+Double-tap window and input buffer are in `data/input_settings.tres` (open it in Godot's FileSystem dock, edit in the Inspector).
+
 ### Run tests
 
 - **In the editor:** open the **GUT** tab at the bottom of the window. The first time, open its settings (gear icon) and add `res://test` as a test directory with *Include Subdirectories* on. Then click **Run All**.
