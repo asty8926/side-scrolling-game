@@ -133,11 +133,16 @@ jobs:
           find "$APP" -maxdepth 3 -printf '%p\n' | head -40
           ls -lh build/side-scrolling-game.zip "$APP"
 
-      - name: Upload macOS .app
+      # upload-artifact@v4 does not keep Unix file modes, so a raw .app
+      # would lose the executable bit. A tar preserves them.
+      - name: Archive macOS .app
+        run: tar -cf build/side-scrolling-game-macos.tar -C build/macos side-scrolling-game.app
+
+      - name: Upload macOS .app archive
         uses: actions/upload-artifact@v4
         with:
           name: macos-app
-          path: build/macos/side-scrolling-game.app
+          path: build/side-scrolling-game-macos.tar
           if-no-files-found: error
           retention-days: 14
 

@@ -19,7 +19,7 @@ Every green CI run on `main` builds an unsigned Mac app you can download:
 1. Open this repo on GitHub, go to the **Actions** tab, and click the **CI** workflow.
 2. Open the latest **green** run on the `main` branch (or a run you started with **Run workflow**).
 3. At the bottom, under **Artifacts**, download **macos-app**. That download is a zip.
-4. Unzip it: you should see `side-scrolling-game.app`. Drag it to **Applications** or keep it in a folder you choose (avoid leaving it in **Downloads** if macOS acts oddly, which can happen while the file is still quarantined).
+4. Unzip it: you should see `side-scrolling-game-macos.tar`. Double-click that (or in Terminal: `tar -xf side-scrolling-game-macos.tar`). You now have `side-scrolling-game.app`. The extra tar step keeps the app executable; GitHub's zip alone would drop that permission. Drag the app to **Applications** or keep it in a folder you choose (avoid leaving it in **Downloads** if macOS acts oddly, which can happen while the file is still quarantined).
 5. **First launch only** (the app is ad-hoc signed, not notarized, so Gatekeeper warns once):
    - Right-click (or Control-click) `side-scrolling-game.app` and choose **Open**, then click **Open** in the dialog. Enter your password if asked.
    - If macOS still blocks it: open **System Settings > Privacy & Security**, scroll to the message about `side-scrolling-game`, and click **Open Anyway**.
