@@ -28,6 +28,11 @@ func is_recording() -> bool:
 	return _replay != null
 
 
+## Ticks recorded so far (0 when not recording).
+func recorded_ticks() -> int:
+	return _replay.tick_count() if _replay != null else 0
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if enabled and OS.is_debug_build() and event.is_action_pressed(&"debug_record_replay") and not event.is_echo():
 		toggle()

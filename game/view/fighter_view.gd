@@ -12,6 +12,8 @@ extends Node3D
 @export var fighter_index: int = 0
 @export var body_color: Color = Color(0.25, 0.55, 0.95)
 @export var nose_color: Color = Color(0.98, 0.85, 0.25)
+## Color of the attack boxes shown while a move's hitboxes are active.
+@export var hit_color: Color = Color(1.0, 0.45, 0.1, 0.45)
 ## Seconds to turn around when the facing flips (0 = instant).
 @export_range(0.0, 0.5, 0.01, "suffix:s") var turn_time: float = 0.06
 
@@ -20,6 +22,8 @@ var _current: Vector3 = Vector3.ZERO
 var _facing: int = SimFighter.RIGHT
 var _has_state: bool = false
 var _body: Node3D
+var _hit_meshes: Array[MeshInstance3D] = []
+var _hit_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -66,6 +70,7 @@ func _read_state(snap: bool) -> void:
 	_previous = position_now if snap or not _has_state else _current
 	_current = position_now
 	_facing = fighter.facing
+	_show_hitboxes(fighter)
 	if not _has_state:
 		position = position_now
 		_body.rotation.y = 0.0 if _facing == SimFighter.RIGHT else PI
@@ -96,6 +101,41 @@ func _build_placeholder() -> void:
 	# Body faces +X when rotation.y == 0.
 	nose_instance.position = Vector3(capsule.radius + 0.1, height * 0.75, 0.0)
 	_body.add_child(nose_instance)
+
+
+## Shows the hitboxes that were checked on the tick just simulated (the sim
+## advances move_tick after resolving hits).
+func _show_hitboxes(fighter: SimFighter) -> void:
+	var shown: int = 0
+	var move: MoveData = SimCombat.current_move(driver.world, fighter)
+	if move != null:
+		var checked_tick: int = fighter.move_tick - 1
+		for box: HitboxData in move.hitboxes:
+			if checked_tick < box.from_tick or checked_tick > box.to_tick:
+				continue
+			if shown >= _hit_meshes.size():
+				_hit_meshes.append(_new_hit_mesh())
+			var instance: MeshInstance3D = _hit_meshes[shown]
+			(instance.mesh as BoxMesh).size = Vector3(SimUnits.to_meters(box.width), SimUnits.to_meters(box.height), 0.6)
+			instance.position = Vector3(SimUnits.to_meters(box.offset_x * fighter.facing), SimUnits.to_meters(box.offset_y + box.height / 2), 0.0)
+			instance.visible = true
+			shown += 1
+	for i: int in range(shown, _hit_meshes.size()):
+		_hit_meshes[i].visible = false
+
+
+func _new_hit_mesh() -> MeshInstance3D:
+	if _hit_material == null:
+		_hit_material = _material(hit_color)
+		_hit_material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_hit_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var mesh: BoxMesh = BoxMesh.new()
+	mesh.material = _hit_material
+	var instance: MeshInstance3D = MeshInstance3D.new()
+	instance.name = "Hitbox%d" % _hit_meshes.size()
+	instance.mesh = mesh
+	add_child(instance)
+	return instance
 
 
 static func _material(color: Color) -> StandardMaterial3D:
