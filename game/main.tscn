@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
 [ext_resource type="Script" path="res://game/input/input_hint.gd" id="2_hint"]
@@ -6,6 +6,8 @@
 [ext_resource type="Script" path="res://game/view/room_view.gd" id="4_room"]
 [ext_resource type="Script" path="res://game/view/fighter_view.gd" id="5_fighter"]
 [ext_resource type="Script" path="res://game/view/side_camera.gd" id="6_camera"]
+[ext_resource type="Script" path="res://game/debug/rec_indicator.gd" id="7_rec_label"]
+[ext_resource type="Script" path="res://game/view/projectile_view.gd" id="8_arrows"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
 sky_top_color = Color(0.32, 0.55, 0.85, 1)
@@ -27,6 +29,7 @@ tonemap_mode = 3
 
 [node name="SimDriver" type="Node" parent="."]
 script = ExtResource("1_driver")
+setup = &"training"
 
 [node name="ReplayRecorder" type="Node" parent="SimDriver"]
 script = ExtResource("3_rec")
@@ -45,6 +48,17 @@ driver = NodePath("../SimDriver")
 
 [node name="FighterView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
 script = ExtResource("5_fighter")
+driver = NodePath("../SimDriver")
+
+[node name="DummyView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("5_fighter")
+driver = NodePath("../SimDriver")
+fighter_index = 1
+body_color = Color(0.6, 0.6, 0.62, 1)
+nose_color = Color(0.3, 0.3, 0.32, 1)
+
+[node name="ProjectileView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("8_arrows")
 driver = NodePath("../SimDriver")
 
 [node name="SideCamera" type="Camera3D" parent="." node_paths=PackedStringArray("target", "driver")]
@@ -76,3 +90,16 @@ theme_override_font_sizes/font_size = 13
 horizontal_alignment = 1
 autowrap_mode = 3
 script = ExtResource("2_hint")
+
+[node name="RecIndicator" type="Label" parent="Hud" node_paths=PackedStringArray("recorder")]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -260.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 36.0
+grow_horizontal = 0
+horizontal_alignment = 2
+script = ExtResource("7_rec_label")
+recorder = NodePath("../../SimDriver/ReplayRecorder")

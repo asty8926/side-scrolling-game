@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CharacterData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://game/sim/character_data.gd" id="1_char"]
+[ext_resource type="Script" path="res://game/sim/hurtbox_data.gd" id="2_hurt"]
+[ext_resource type="Resource" path="res://data/characters/ranger_moves.tres" id="3_moves"]
+
+[sub_resource type="Resource" id="hurtbox"]
+script = ExtResource("2_hurt")
+width = 600
+height = 1400
+
+[resource]
+script = ExtResource("1_char")
+id = &"ranger"
+max_hp = 10000
+attack = 100
+hurtbox = SubResource("hurtbox")
+moveset = ExtResource("3_moves")

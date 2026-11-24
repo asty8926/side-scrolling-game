@@ -12,6 +12,9 @@ var actor: int = 0
 var target: int = 0
 ## Move id when relevant (e.g. &"ranger_zzzz_1").
 var move_id: StringName = &""
+## Resolved integer damage and KD added (hit events only).
+var damage: int = 0
+var kd: int = 0
 
 
 func _init(event_tick: int = 0, event_type: StringName = &"", actor_id: int = 0, target_id: int = 0, move: StringName = &"") -> void:
@@ -24,4 +27,7 @@ func _init(event_tick: int = 0, event_type: StringName = &"", actor_id: int = 0,
 
 ## Stable text form used by replay files and test messages: "tick:type:actor:target:move".
 func to_text() -> String:
-	return "%d:%s:%d:%d:%s" % [tick, type, actor, target, move_id]
+	var text: String = "%d:%s:%d:%d:%s" % [tick, type, actor, target, move_id]
+	if type == &"hit":
+		text += ":damage=%d:kd=%d" % [damage, kd]
+	return text

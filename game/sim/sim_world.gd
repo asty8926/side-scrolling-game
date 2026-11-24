@@ -13,9 +13,11 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 3
+const SNAPSHOT_VERSION: int = 5
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
+## Most fighters (players + dummies/mobs) a world and its snapshot hold.
+const MAX_FIGHTERS: int = 8
 
 ## Ticks stepped since the world was created.
 var tick: int = 0
@@ -42,6 +44,12 @@ var input_settings: InputSettings = InputSettings.new()
 var tier_height: int = 0
 ## Player-controlled fighters, stable insertion order.
 var fighters: Array[SimFighter] = []
+## Projectiles in flight, in creation (id) order.
+var projectiles: Array[SimProjectile] = []
+## Most projectiles alive at once (a snapshot limit).
+const MAX_PROJECTILES: int = 64
+## Static character data, indexed by each fighter's `character` field.
+var characters: Array[CharacterData] = []
 ## Entities in stable insertion order.
 var entities: Array[SimEntity] = []
 var _next_entity_id: int = 1
@@ -75,21 +83,42 @@ func configure(room_layout: RoomLayout, movement_params: MovementParams, setting
 
 ## Adds a fighter for `player` standing on the floor at the room spawn.
 ## Returns its id, or -1 when the world has no room configured or is full.
-func add_fighter(player: int) -> int:
+func add_fighter(player: int, character_index: int = 0) -> int:
 	if room == null or movement == null:
 		push_error("SimWorld.add_fighter: configure() the world first")
 		return -1
-	if fighters.size() >= MAX_PLAYERS:
-		push_error("SimWorld.add_fighter: at most %d fighters fit in a snapshot" % MAX_PLAYERS)
+	if fighters.size() >= MAX_FIGHTERS:
+		push_error("SimWorld.add_fighter: at most %d fighters fit in a snapshot" % MAX_FIGHTERS)
+		return -1
+	if player < SimFighter.NO_PLAYER or player >= MAX_PLAYERS:
+		push_error("SimWorld.add_fighter: player %d is not NO_PLAYER or in [0, %d)" % [player, MAX_PLAYERS])
+		return -1
+	if character_index < 0 or character_index >= characters.size():
+		push_error("SimWorld.add_fighter: unknown character %d (add_character first)" % character_index)
 		return -1
 	var fighter: SimFighter = SimFighter.new()
 	fighter.id = _next_entity_id
 	_next_entity_id += 1
 	fighter.player = player
+	fighter.character = character_index
 	fighter.x = room.spawn_x
 	fighter.y = room.floor_y
 	fighters.append(fighter)
 	return fighter.id
+
+
+## Registers static character data. Returns its index, or -1 with an error
+## when the data is invalid.
+func add_character(data: CharacterData) -> int:
+	if data == null:
+		push_error("SimWorld.add_character: no data")
+		return -1
+	var problems: Array[String] = data.validate()
+	if not problems.is_empty():
+		push_error("SimWorld.add_character: %s is invalid: %s" % [data.id, "; ".join(problems)])
+		return -1
+	characters.append(data)
+	return characters.size() - 1
 
 
 ## Adds an entity, gives it the next id and returns that id.
@@ -147,8 +176,18 @@ func step(inputs: Array[InputFrame]) -> void:
 	var empty_history: InputHistory = InputHistory.new()
 	empty_history.push(InputFrame.new())
 	for fighter: SimFighter in fighters:
-		var history: InputHistory = histories[fighter.player] if fighter.player < histories.size() else empty_history
+		var history: InputHistory = histories[fighter.player] if fighter.player >= 0 and fighter.player < histories.size() else empty_history
+		SimCombat.begin_tick(self, fighter, history)
 		SimMovement.step_fighter(self, fighter, history)
+	for fighter: SimFighter in fighters:
+		SimCombat.apply_motion(self, fighter)
+	for fighter: SimFighter in fighters:
+		SimCombat.resolve_hits(self, fighter)
+	SimCombat.step_projectiles(self)
+	for fighter: SimFighter in fighters:
+		SimCombat.fire_projectiles(self, fighter)
+	for fighter: SimFighter in fighters:
+		SimCombat.advance(fighter)
 
 	for entity: SimEntity in entities:
 		entity.x += entity.vx
@@ -157,9 +196,24 @@ func step(inputs: Array[InputFrame]) -> void:
 	tick += 1
 
 
+## Next id for a fighter, entity or projectile (shared, increasing).
+func take_id() -> int:
+	var id: int = _next_entity_id
+	_next_entity_id += 1
+	return id
+
+
 ## Records an event for this tick (used by sim systems).
 func emit_event(type: StringName, actor: int = 0, target: int = 0, move_id: StringName = &"") -> void:
 	events.append(SimEvent.new(tick, type, actor, target, move_id))
+
+
+## Records a hit with resolved damage and KD (response is added in #45).
+func emit_hit(actor: int, target: int, move: MoveData, damage: int) -> void:
+	var event: SimEvent = SimEvent.new(tick, &"hit", actor, target, move.id)
+	event.damage = damage
+	event.kd = move.kd
+	events.append(event)
 
 
 ## Serializes the whole state in a fixed field order (little-endian).
@@ -180,6 +234,9 @@ func snapshot() -> PackedByteArray:
 	buf.put_32(fighters.size())
 	for fighter: SimFighter in fighters:
 		fighter.write_to(buf)
+	buf.put_32(projectiles.size())
+	for projectile: SimProjectile in projectiles:
+		projectile.write_to(buf)
 	buf.put_32(entities.size())
 	for entity: SimEntity in entities:
 		buf.put_64(entity.id)
@@ -244,16 +301,30 @@ func restore(data: PackedByteArray) -> Error:
 		push_error("SimWorld.restore: snapshot truncated before the fighter list")
 		return ERR_INVALID_DATA
 	var fighter_count: int = buf.get_32()
-	if fighter_count < 0 or fighter_count > MAX_PLAYERS:
+	if fighter_count < 0 or fighter_count > MAX_FIGHTERS:
 		push_error("SimWorld.restore: invalid fighter count %d" % fighter_count)
 		return ERR_INVALID_DATA
 	var new_fighters: Array[SimFighter] = []
 	for i: int in fighter_count:
 		var fighter: SimFighter = SimFighter.read_from(buf)
-		if fighter == null or (room != null and fighter.ground >= room.platforms.size()):
+		if fighter == null or (room != null and fighter.ground >= room.platforms.size()) or fighter.player >= MAX_PLAYERS or not _fighter_data_ok(fighter):
 			push_error("SimWorld.restore: invalid fighter %d" % i)
 			return ERR_INVALID_DATA
 		new_fighters.append(fighter)
+	if buf.get_available_bytes() < 4:
+		push_error("SimWorld.restore: snapshot truncated before the projectile list")
+		return ERR_INVALID_DATA
+	var projectile_count: int = buf.get_32()
+	if projectile_count < 0 or projectile_count > MAX_PROJECTILES:
+		push_error("SimWorld.restore: invalid projectile count %d" % projectile_count)
+		return ERR_INVALID_DATA
+	var new_projectiles: Array[SimProjectile] = []
+	for i: int in projectile_count:
+		var projectile: SimProjectile = SimProjectile.read_from(buf)
+		if projectile == null or SimCombat.projectile_data(self, projectile) == null:
+			push_error("SimWorld.restore: invalid projectile %d" % i)
+			return ERR_INVALID_DATA
+		new_projectiles.append(projectile)
 	if buf.get_available_bytes() < 4:
 		push_error("SimWorld.restore: snapshot truncated before the entity list")
 		return ERR_INVALID_DATA
@@ -282,6 +353,13 @@ func restore(data: PackedByteArray) -> Error:
 		last_id = fighter.id
 	var last_fighter_id: int = last_id
 	last_id = 0
+	for projectile: SimProjectile in new_projectiles:
+		if projectile.id <= last_id:
+			push_error("SimWorld.restore: projectile ids must be positive and increasing")
+			return ERR_INVALID_DATA
+		last_id = projectile.id
+	last_fighter_id = maxi(last_fighter_id, last_id)
+	last_id = 0
 	for entity: SimEntity in new_entities:
 		if entity.id <= last_id:
 			push_error("SimWorld.restore: entity ids must be positive and increasing (got %d after %d)" % [entity.id, last_id])
@@ -302,8 +380,18 @@ func restore(data: PackedByteArray) -> Error:
 	_next_entity_id = new_next_id
 	histories = new_histories
 	fighters = new_fighters
+	projectiles = new_projectiles
 	entities = new_entities
 	return OK
+
+
+func _fighter_data_ok(fighter: SimFighter) -> bool:
+	if fighter.character >= characters.size():
+		return false
+	if fighter.move == SimFighter.NO_MOVE:
+		return true
+	var moveset: MoveSet = characters[fighter.character].moveset
+	return moveset != null and fighter.move < moveset.moves.size()
 
 
 static func _input_before(a: InputFrame, b: InputFrame) -> bool:
