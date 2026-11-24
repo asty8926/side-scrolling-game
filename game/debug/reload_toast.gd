@@ -10,6 +10,7 @@ extends Label
 @export var error_seconds: float = 8.0
 
 var _left: float = 0.0
+var _showing_error: bool = false
 
 
 func _ready() -> void:
@@ -26,15 +27,25 @@ func _process(delta: float) -> void:
 	_left -= delta
 	if _left <= 0.0:
 		visible = false
+		_showing_error = false
 
 
 func _on_reloaded(path: String, problems: Array[String]) -> void:
+	var line: String = "Reloaded %s" % path.get_file()
+	if not problems.is_empty():
+		line = "%s NOT reloaded (old values kept):\n- %s" % [path.get_file(), "\n- ".join(problems)]
+	if _showing_error and _left > 0.0:
+		# Never hide a rejected file behind a later message: add a line instead.
+		text += "\n" + line
+		if not problems.is_empty():
+			_left = error_seconds
+		return
 	visible = true
-	if problems.is_empty():
-		text = "Reloaded %s" % path.get_file()
-		add_theme_color_override(&"font_color", Color(0.45, 1.0, 0.5))
-		_left = ok_seconds
-	else:
-		text = "%s NOT reloaded (old values kept):\n- %s" % [path.get_file(), "\n- ".join(problems)]
+	text = line
+	_showing_error = not problems.is_empty()
+	if _showing_error:
 		add_theme_color_override(&"font_color", Color(1.0, 0.4, 0.35))
 		_left = error_seconds
+	else:
+		add_theme_color_override(&"font_color", Color(0.45, 1.0, 0.5))
+		_left = ok_seconds

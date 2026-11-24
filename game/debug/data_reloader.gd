@@ -2,7 +2,7 @@ class_name DataReloader
 extends Node
 ## Debug builds only: hot reload of the game data the sim uses.
 ##
-## Twice a second it checks the modification time of every .tres the world
+## Twice a second it checks the content (MD5) of every .tres the world
 ## was built from (characters, move sets, movement, room, input settings).
 ## A changed file is loaded fresh, validated, and swapped into the parent
 ## SimDriver's world between two ticks (this runs in _process, never inside
@@ -17,9 +17,13 @@ signal reloaded(path: String, problems: Array[String])
 @export_range(0.1, 5.0, 0.1, "suffix:s") var poll_interval: float = 0.5
 ## Off in release exports regardless of this flag.
 @export var enabled: bool = true
+## Redrawn after a room or movement reload (the platforms may have moved).
+@export var room_view: RoomView
 
 var _driver: SimDriver
-var _mtimes: Dictionary[String, int] = {}
+## Content fingerprints: file modification times only have 1 s precision,
+## so a fix saved in the same second as a rejected edit would be missed.
+var _hashes: Dictionary[String, String] = {}
 var _elapsed: float = 0.0
 
 
@@ -32,7 +36,7 @@ func _ready() -> void:
 		enabled = false
 	set_process(enabled)
 	if enabled:
-		_snapshot_mtimes.call_deferred()
+		_snapshot_hashes.call_deferred()
 
 
 func _process(delta: float) -> void:
@@ -55,15 +59,15 @@ func watched_paths() -> Array[String]:
 	return paths
 
 
-## Reloads every watched file whose modification time changed.
+## Reloads every watched file whose content changed.
 func check_now() -> void:
 	for path: String in watched_paths():
-		var mtime: int = FileAccess.get_modified_time(path)
-		if _mtimes.has(path) and _mtimes[path] != mtime:
-			_mtimes[path] = mtime
+		var digest: String = FileAccess.get_md5(path)
+		if _hashes.has(path) and _hashes[path] != digest:
+			_hashes[path] = digest
 			reload_path(path)
-		elif not _mtimes.has(path):
-			_mtimes[path] = mtime
+		elif not _hashes.has(path):
+			_hashes[path] = digest
 
 
 ## Loads `path` fresh, validates it and swaps it into the world.
@@ -76,8 +80,13 @@ func reload_path(path: String) -> Array[String]:
 	else:
 		problems = _apply(path, fresh)
 	if problems.is_empty():
-		# Make later loads of this path (and files that reference it) use the new data.
+		# Make later loads of this path use the new data. The fresh copy already
+		# carries `path` without being cached, and take_over_path does nothing
+		# when the path is unchanged, so clear it first.
+		fresh.resource_path = ""
 		fresh.take_over_path(path)
+		if (fresh is RoomLayout or fresh is MovementParams) and room_view != null:
+			room_view.build(_driver.world.room, _driver.world.tier_height)
 		print("DataReloader: reloaded %s" % path)
 	else:
 		push_error("DataReloader: %s kept its previous values: %s" % [path, "; ".join(problems)])
@@ -115,9 +124,9 @@ func _apply(path: String, fresh: Resource) -> Array[String]:
 	return problems
 
 
-func _snapshot_mtimes() -> void:
+func _snapshot_hashes() -> void:
 	for path: String in watched_paths():
-		_mtimes[path] = FileAccess.get_modified_time(path)
+		_hashes[path] = FileAccess.get_md5(path)
 
 
 static func _add_path(paths: Array[String], resource: Resource) -> void:

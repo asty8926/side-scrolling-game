@@ -36,8 +36,9 @@ setup = &"training"
 [node name="ReplayRecorder" type="Node" parent="SimDriver"]
 script = ExtResource("3_rec")
 
-[node name="DataReloader" type="Node" parent="SimDriver"]
+[node name="DataReloader" type="Node" parent="SimDriver" node_paths=PackedStringArray("room_view")]
 script = ExtResource("8_reloader")
+room_view = NodePath("../../RoomView")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")

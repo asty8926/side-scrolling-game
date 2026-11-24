@@ -85,3 +85,68 @@ func test_removed_projectile_entry_drops_its_arrow_in_flight() -> void:
 	assert_eq(_driver.world.projectiles.size(), 0, "no arrow without data")
 	_driver.world.step([InputFrame.from_held(0, 0, 0)] as Array[InputFrame])
 	assert_eq(_driver.world.projectiles.size(), 0)
+
+
+func test_a_fix_saved_in_the_same_second_is_still_picked_up() -> void:
+	_reloader._snapshot_hashes()
+	_save_with(func(moves: MoveSet) -> void: moves.moves[0].active = -3)
+	_reloader.check_now()
+	assert_push_error_count(1)
+	_save_with(func(moves: MoveSet) -> void:
+		moves.moves[0].active = 3
+		moves.moves[0].damage_percent = 777)
+	_reloader.check_now()
+	assert_eq(_driver.world.characters[0].moveset.moves[0].damage_percent, 777, "content change detected")
+
+
+func test_cached_loads_return_the_reloaded_data() -> void:
+	_save_with(func(moves: MoveSet) -> void: moves.moves[0].damage_percent = 555)
+	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
+	assert_eq((load(MOVES) as MoveSet).moves[0].damage_percent, 555, "the resource cache holds the new copy")
+
+
+func test_a_fighter_follows_its_move_by_id_when_moves_shift() -> void:
+	var fighter: SimFighter = _driver.world.fighters[0]
+	fighter.move = 1  # ranger_z2
+	fighter.move_tick = 4
+	_save_with(func(moves: MoveSet) -> void: moves.moves.remove_at(0))  # z2 shifts into slot 0
+	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
+	assert_eq(fighter.move, 0, "still playing z2, now in slot 0")
+	assert_eq(fighter.move_tick, 4)
+
+
+func test_a_fighter_whose_move_was_removed_stops_it() -> void:
+	var fighter: SimFighter = _driver.world.fighters[0]
+	fighter.move = 0  # ranger_z1
+	fighter.move_tick = 3
+	_save_with(func(moves: MoveSet) -> void: moves.moves.remove_at(0))
+	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
+	assert_eq(fighter.move, SimFighter.NO_MOVE, "z1 is gone, z2 (now in slot 0) does not take over")
+
+
+func test_room_reload_redraws_the_room_and_reseats_standing_fighters() -> void:
+	var view: RoomView = RoomView.new()
+	add_child_autofree(view)
+	view.build(_driver.world.room, _driver.world.tier_height)
+	_reloader.room_view = view
+	var fighter: SimFighter = _driver.world.fighters[0]
+	fighter.ground = 0
+	var room: RoomLayout = _driver.world.room.duplicate(true) as RoomLayout
+	room.platforms[0].x += 1000
+	room.platforms[0].tier += 1
+	var path: String = DIR + "/room.tres"
+	assert_eq(ResourceSaver.save(room, path), OK)
+	assert_eq(_reloader.reload_path(path), [] as Array[String])
+	var world: SimWorld = _driver.world
+	assert_eq(fighter.y, world.room.platforms[0].top(world.room.floor_y, world.tier_height), "stands on the new top")
+	assert_almost_eq(view.platform_meshes()[0].position.x, SimUnits.to_meters(world.room.platforms[0].x), 0.001, "mesh moved")
+	DirAccess.remove_absolute(path)
+
+
+func test_toast_keeps_an_error_visible_after_a_later_success() -> void:
+	var toast: ReloadToast = ReloadToast.new()
+	add_child_autofree(toast)
+	toast._on_reloaded("res://room.tres", ["bad tier"] as Array[String])
+	toast._on_reloaded("res://movement.tres", [] as Array[String])
+	assert_string_contains(toast.text, "room.tres NOT reloaded")
+	assert_string_contains(toast.text, "Reloaded movement.tres")

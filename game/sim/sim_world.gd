@@ -132,19 +132,33 @@ func replace_character(index: int, data: CharacterData) -> Array[String]:
 	problems = data.validate()
 	if not problems.is_empty():
 		return problems
+	# Moves are stored as indexes: follow each one by its id into the new
+	# move set, so a move shifting into a removed move's slot never takes over.
+	var old_moves: MoveSet = characters[index].moveset
+	var new_moves: MoveSet = data.moveset
 	characters[index] = data
 	for fighter: SimFighter in fighters:
-		if fighter.character == index and fighter.move != SimFighter.NO_MOVE and not _fighter_data_ok(fighter):
-			fighter.move = SimFighter.NO_MOVE
-			fighter.move_tick = 0
-			fighter.hit_keys.clear()
-	# Arrows in flight whose projectile entry no longer exists vanish.
+		if fighter.character == index and fighter.move != SimFighter.NO_MOVE:
+			fighter.move = _same_move(old_moves, new_moves, fighter.move)
+			if fighter.move == SimFighter.NO_MOVE:
+				fighter.move_tick = 0
+				fighter.hit_keys.clear()
+	# Arrows in flight follow their move too, and vanish without data.
 	var alive: Array[SimProjectile] = []
 	for projectile: SimProjectile in projectiles:
-		if projectile.character != index or SimCombat.projectile_data(self, projectile) != null:
+		if projectile.character == index:
+			projectile.move = _same_move(old_moves, new_moves, projectile.move)
+		if projectile.move != SimFighter.NO_MOVE and SimCombat.projectile_data(self, projectile) != null:
 			alive.append(projectile)
 	projectiles = alive
 	return problems
+
+
+## Index in `new_moves` of the move at `move` in `old_moves`, by id, or NO_MOVE.
+static func _same_move(old_moves: MoveSet, new_moves: MoveSet, move: int) -> int:
+	if old_moves == null or new_moves == null or move < 0 or move >= old_moves.moves.size():
+		return SimFighter.NO_MOVE
+	return new_moves.index_of(old_moves.moves[move].id)
 
 
 ## Debug hot reload, between ticks: like configure(), then puts fighters that
@@ -155,6 +169,11 @@ func replace_static(room_layout: RoomLayout, movement_params: MovementParams, se
 		for fighter: SimFighter in fighters:
 			if fighter.ground >= room.platforms.size():
 				fighter.ground = SimFighter.IN_AIR
+			elif fighter.ground >= 0:
+				# Stand on the new top (a moved platform or a new tier height).
+				fighter.y = room.platforms[fighter.ground].top(room.floor_y, tier_height)
+			elif fighter.ground == SimFighter.ON_FLOOR:
+				fighter.y = room.floor_y
 	return problems
 
 
