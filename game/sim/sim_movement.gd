@@ -17,7 +17,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var m: MovementParams = world.movement
 	var room: RoomLayout = world.room
 	var window: int = world.input_settings.double_tap_window_ticks
-	var attacking: bool = f.is_in_move()
+	var attacking: bool = f.is_in_move() or f.is_in_hitstun()
 	var held: int = 0 if attacking else history.held_now()
 	var pressed: int = 0 if attacking else history.pressed_ago(0)
 	var dir: int = 0

@@ -13,7 +13,7 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 5
+const SNAPSHOT_VERSION: int = 6
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
 ## Most fighters (players + dummies/mobs) a world and its snapshot hold.
@@ -44,6 +44,8 @@ var input_settings: InputSettings = InputSettings.new()
 var tier_height: int = 0
 ## Player-controlled fighters, stable insertion order.
 var fighters: Array[SimFighter] = []
+## Melee contacts of the current tick (always empty between ticks).
+var pending_hits: Array[SimCombat.PendingHit] = []
 ## Projectiles in flight, in creation (id) order.
 var projectiles: Array[SimProjectile] = []
 ## Most projectiles alive at once (a snapshot limit).
@@ -102,6 +104,8 @@ func add_fighter(player: int, character_index: int = 0) -> int:
 	fighter.player = player
 	fighter.character = character_index
 	fighter.x = room.spawn_x
+	fighter.home_x = room.spawn_x
+	fighter.hp = characters[character_index].max_hp
 	fighter.y = room.floor_y
 	fighters.append(fighter)
 	return fighter.id
@@ -119,6 +123,27 @@ func add_character(data: CharacterData) -> int:
 		return -1
 	characters.append(data)
 	return characters.size() - 1
+
+
+## Debug reset (F4), between ticks: every fighter without a player (the
+## training dummy) gets full HP, no KD/hitstun/combo, and goes back home.
+func reset_dummies() -> void:
+	for fighter: SimFighter in fighters:
+		if fighter.player != SimFighter.NO_PLAYER:
+			continue
+		fighter.hp = characters[fighter.character].max_hp
+		fighter.kd = 0
+		fighter.hitstun = 0
+		fighter.combo = 0
+		fighter.last_damage = 0
+		fighter.x = fighter.home_x
+		fighter.y = room.floor_y if room != null else fighter.y
+		fighter.vx = 0
+		fighter.vy = 0
+		fighter.ground = SimFighter.ON_FLOOR
+		fighter.move = SimFighter.NO_MOVE
+		fighter.move_tick = 0
+	emit_event(&"reset")
 
 
 ## Debug hot reload, between ticks: replaces character `index` with `data`
@@ -246,6 +271,7 @@ func step(inputs: Array[InputFrame]) -> void:
 		SimCombat.apply_motion(self, fighter)
 	for fighter: SimFighter in fighters:
 		SimCombat.resolve_hits(self, fighter)
+	SimCombat.apply_hits(self)
 	SimCombat.step_projectiles(self)
 	for fighter: SimFighter in fighters:
 		SimCombat.fire_projectiles(self, fighter)

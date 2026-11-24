@@ -48,6 +48,8 @@ enum Start {
 @export_range(0, 180, 1, "suffix:ticks") var hitstun_ticks: int = 30
 ## KD (knockdown) gauge added per hit. # proposal, tune
 @export_range(0, 200, 1) var kd: int = 10
+## Sub-units the target is pushed away per hit. # proposal, tune
+@export_range(0, 2000, 10, "suffix:sub") var pushback: int = 60
 
 @export_group("String")
 ## Moves this one can cancel into (next nodes of the string).
@@ -82,8 +84,8 @@ func validate() -> Array[String]:
 		problems.append("id is empty")
 	if active < 1 or startup < 0 or recovery < 0:
 		problems.append("startup and recovery must be >= 0, active >= 1")
-	if hitstun_ticks < 0 or kd < 0 or damage_percent < 0:
-		problems.append("damage_percent, hitstun_ticks and kd must be >= 0")
+	if hitstun_ticks < 0 or kd < 0 or damage_percent < 0 or pushback < 0:
+		problems.append("damage_percent, hitstun_ticks, kd and pushback must be >= 0")
 	if hitboxes.size() > MAX_HITBOXES:
 		problems.append("%d hitboxes, at most %d per move" % [hitboxes.size(), MAX_HITBOXES])
 	for i: int in hitboxes.size():

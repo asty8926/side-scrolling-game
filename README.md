@@ -25,7 +25,7 @@ What to try:
 - ↑ jumps up one platform; ↑ again in the air (double jump) reaches two.
 - ↓ while standing on a platform drops through it.
 - The camera follows sideways once you leave the middle of the screen, and stops at the room walls.
-- A grey training dummy stands 1 m in front of you. Press **W** (AZERTY; **Z** on QWERTY) up to 4 times for the 4-kick string `ZZZZ`, or **X** up to 4 times for the arrow string `XXXX` (W/Z attacks are kicks; X attacks shoot real arrows that fly across the room, shown in pink, and hit the first character they touch; the third X shoots two). Mashing early is fine (the press is buffered); pressing too late ends the string. The orange box shows where a kick can hit, only on its active ticks.
+- A grey training dummy stands 1 m in front of you. Press **W** (AZERTY; **Z** on QWERTY) up to 4 times for the 4-kick string `ZZZZ`, or **X** up to 4 times for the arrow string `XXXX` (W/Z attacks are kicks; X attacks shoot real arrows that fly across the room, shown in pink, and hit the first character they touch; the third X shoots two). Mashing early is fine (the press is buffered); pressing too late ends the string. The orange box shows where a kick can hit, only on its active ticks. Above the dummy: its HP, KD gauge, combo counter (hits landed while it is still in hitstun), last hit damage and remaining hitstun. Kicks and arrows both push it back a little in the direction of the hit. **F4** (Mac: **fn + F4**) resets the dummy.
 
 ![Test room](docs/evidence/42-test-room.png)
 
@@ -43,7 +43,7 @@ Keys are bound by **physical position**, so they work on QWERTY and AZERTY with 
 | Skills 1-4 | A S D C | **Q** S D C |
 | Awakening | Left Ctrl | Left Ctrl |
 | Record a replay (debug); a red **REC** shows top right while recording | F9 | F9 (Mac: **fn + F9**) |
-| Reserved for the debug overlay / reset (later issue) | F3 / F4 | F3 / F4 |
+| Reset the training dummy (debug) | F4 | F4 (Mac: **fn + F4**) |
 
 Double-tap window and input buffer are in `data/input_settings.tres` (open it in Godot's FileSystem dock, edit in the Inspector).
 
