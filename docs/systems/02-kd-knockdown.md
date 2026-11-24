@@ -15,7 +15,7 @@ sources:
 
 # KD (knockdown) gauge
 
-> Tracking issue: [#2](https://github.com/asty8926/side-scrolling-game/issues/2) · Milestone epic: [#18](https://github.com/asty8926/side-scrolling-game/issues/18) · Research: [#15](https://github.com/asty8926/side-scrolling-game/issues/15)
+> Tracking issue: [#2](https://github.com/asty8926/side-scrolling-game/issues/2) · Milestone epic: [#36](https://github.com/asty8926/side-scrolling-game/issues/36) · Research: [#15](https://github.com/asty8926/side-scrolling-game/issues/15)
 
 ## What it is in Elsword
 

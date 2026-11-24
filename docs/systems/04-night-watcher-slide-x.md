@@ -14,7 +14,7 @@ sources:
 
 # `>>ZX` (Asty's `>>WX`): slide kick, then slash through
 
-> Tracking issue: [#4](https://github.com/asty8926/side-scrolling-game/issues/4) · Milestone epic: [#17](https://github.com/asty8926/side-scrolling-game/issues/17)
+> Tracking issue: [#4](https://github.com/asty8926/side-scrolling-game/issues/4) · Milestone epic: [#35](https://github.com/asty8926/side-scrolling-game/issues/35)
 
 ## What it is in Elsword
 

@@ -14,21 +14,21 @@ Start here. These docs describe the Elsword systems Asty (GitHub `asty8926`) lov
 
 | If your task touches... | Read | Milestone | Issue |
 |---|---|---|---|
-| Keyboard bindings, AZERTY/QWERTY, movement, dash, jump, platforms height, command strings | [systems/01-combat-inputs.md](systems/01-combat-inputs.md) | M0-M1 | [#1](https://github.com/asty8926/side-scrolling-game/issues/1) |
+| Keyboard bindings, AZERTY/QWERTY, movement, dash, jump, platforms height, command strings | [systems/01-combat-inputs.md](systems/01-combat-inputs.md) | M0-M1 | [#24](https://github.com/asty8926/side-scrolling-game/issues/24) |
 | KD gauge, knockdown, launches, super armor, stoic thresholds, mana break | [systems/02-kd-knockdown.md](systems/02-kd-knockdown.md) | M1 | [#2](https://github.com/asty8926/side-scrolling-game/issues/2) |
-| The `ZZZ<<>` / `WWW<<>` loop, dash cancel, infinite combo cycles | [systems/03-combo-loops-and-cancels.md](systems/03-combo-loops-and-cancels.md) | M1 | [#3](https://github.com/asty8926/side-scrolling-game/issues/3) |
+| The `ZZZ<<>` / `WWW<<>` loop, dash cancel, infinite combo cycles | [systems/03-combo-loops-and-cancels.md](systems/03-combo-loops-and-cancels.md) | M1 | [#25](https://github.com/asty8926/side-scrolling-game/issues/25) |
 | `>>ZX` / `>>WX` slide kick + slash-through, pass-through moves | [systems/04-night-watcher-slide-x.md](systems/04-night-watcher-slide-x.md) | M0-M1 | [#4](https://github.com/asty8926/side-scrolling-game/issues/4) |
-| Hit-stop, impact, hitstun, input buffer, cancel windows, cancels into skills | [systems/05-game-feel.md](systems/05-game-feel.md) | M1 | [#5](https://github.com/asty8926/side-scrolling-game/issues/5) |
-| Awakening beads, Ctrl/Cmd, transformation, Way of the Sword, Ara's Eun Mode | [systems/06-awakening.md](systems/06-awakening.md) | M4 | [#6](https://github.com/asty8926/side-scrolling-game/issues/6) |
-| Rena's class resource (Nature's Force / NF) | [systems/07-natures-force.md](systems/07-natures-force.md) | M4 | [#7](https://github.com/asty8926/side-scrolling-game/issues/7) |
-| MP gain/spend, no mana potions, MP regen, skill MP tiers | [systems/08-mp-economy.md](systems/08-mp-economy.md) | M1, M4 | [#8](https://github.com/asty8926/side-scrolling-game/issues/8) |
-| Dungeon rooms, doors, platforms layout, mobs, mini-boss, boss, end rank | [systems/09-dungeons.md](systems/09-dungeons.md) | M2 | [#9](https://github.com/asty8926/side-scrolling-game/issues/9) |
+| Hit-stop, impact, hitstun, input buffer, cancel windows, cancels into skills | [systems/05-game-feel.md](systems/05-game-feel.md) | M1 | [#26](https://github.com/asty8926/side-scrolling-game/issues/26) |
+| Awakening beads, Ctrl/Cmd, transformation, Way of the Sword, Ara's Eun Mode | [systems/06-awakening.md](systems/06-awakening.md) | M4 | [#27](https://github.com/asty8926/side-scrolling-game/issues/27) |
+| Rena's class resource (Nature's Force / NF) | [systems/07-natures-force.md](systems/07-natures-force.md) | M4 | [#28](https://github.com/asty8926/side-scrolling-game/issues/28) |
+| MP gain/spend, no mana potions, MP regen, skill MP tiers | [systems/08-mp-economy.md](systems/08-mp-economy.md) | M1, M4 | [#29](https://github.com/asty8926/side-scrolling-game/issues/29) |
+| Dungeon rooms, doors, platforms layout, mobs, mini-boss, boss, end rank | [systems/09-dungeons.md](systems/09-dungeons.md) | M2 | [#30](https://github.com/asty8926/side-scrolling-game/issues/30) |
 | Boss rush mode | [systems/10-henir.md](systems/10-henir.md) | Later | [#10](https://github.com/asty8926/side-scrolling-game/issues/10) |
-| Town, NPCs, dialogue graphs, shops | [systems/11-town-npcs-shops.md](systems/11-town-npcs-shops.md) | M3 | [#11](https://github.com/asty8926/side-scrolling-game/issues/11) |
-| Parties, online co-op, channels, hunting fields | [systems/12-fields-channels-party.md](systems/12-fields-channels-party.md) | M5, Later | [#12](https://github.com/asty8926/side-scrolling-game/issues/12) |
+| Town, NPCs, dialogue graphs, shops | [systems/11-town-npcs-shops.md](systems/11-town-npcs-shops.md) | M3 | [#31](https://github.com/asty8926/side-scrolling-game/issues/31) |
+| Parties, online co-op, channels, hunting fields | [systems/12-fields-channels-party.md](systems/12-fields-channels-party.md) | M5, Later | [#32](https://github.com/asty8926/side-scrolling-game/issues/32) |
 | Image provenance and licensing | [images/README.md](images/README.md) | - | - |
 
-Milestone epics: [M0 #17](https://github.com/asty8926/side-scrolling-game/issues/17), [M1 #18](https://github.com/asty8926/side-scrolling-game/issues/18), [M2 #19](https://github.com/asty8926/side-scrolling-game/issues/19), [M3 #20](https://github.com/asty8926/side-scrolling-game/issues/20), [M4 #21](https://github.com/asty8926/side-scrolling-game/issues/21), [M5 #22](https://github.com/asty8926/side-scrolling-game/issues/22), [Later #23](https://github.com/asty8926/side-scrolling-game/issues/23). Research issues: [#13](https://github.com/asty8926/side-scrolling-game/issues/13), [#14](https://github.com/asty8926/side-scrolling-game/issues/14), [#15](https://github.com/asty8926/side-scrolling-game/issues/15), [#16](https://github.com/asty8926/side-scrolling-game/issues/16).
+Milestone epics: [M0 #35](https://github.com/asty8926/side-scrolling-game/issues/35), [M1 #36](https://github.com/asty8926/side-scrolling-game/issues/36), [M2 #19](https://github.com/asty8926/side-scrolling-game/issues/19), [M3 #20](https://github.com/asty8926/side-scrolling-game/issues/20), [M4 #21](https://github.com/asty8926/side-scrolling-game/issues/21), [M5 #22](https://github.com/asty8926/side-scrolling-game/issues/22), [Later #23](https://github.com/asty8926/side-scrolling-game/issues/23). Research issues: [#33](https://github.com/asty8926/side-scrolling-game/issues/33), [#14](https://github.com/asty8926/side-scrolling-game/issues/14), [#15](https://github.com/asty8926/side-scrolling-game/issues/15), [#34](https://github.com/asty8926/side-scrolling-game/issues/34).
 
 ## Glossary (Elsword vocabulary)
 

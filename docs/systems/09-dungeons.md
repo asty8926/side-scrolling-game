@@ -4,7 +4,7 @@ system: dungeons
 priority: P0
 milestone: M2
 status: draft
-issue: 9
+issue: 30
 sources:
   - https://elwiki.net/w/Dungeons
   - https://elwiki.net/w/Tree_of_El
@@ -21,7 +21,7 @@ sources:
 
 # Dungeons
 
-> Tracking issue: [#9](https://github.com/asty8926/side-scrolling-game/issues/9) · Milestone epic: [#19](https://github.com/asty8926/side-scrolling-game/issues/19) · Research: [#13](https://github.com/asty8926/side-scrolling-game/issues/13)
+> Tracking issue: [#30](https://github.com/asty8926/side-scrolling-game/issues/30) · Milestone epic: [#19](https://github.com/asty8926/side-scrolling-game/issues/19) · Research: [#33](https://github.com/asty8926/side-scrolling-game/issues/33)
 
 ## What it is in Elsword
 

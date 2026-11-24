@@ -4,7 +4,7 @@ system: mp-economy
 priority: P1
 milestone: M1 (basic gain/spend), M4 (passives, class bonuses)
 status: draft
-issue: 8
+issue: 29
 sources:
   - https://elwiki.net/w/Statistics
   - https://elwiki.net/w/Rena
@@ -17,7 +17,7 @@ sources:
 
 # MP economy (no mana potions)
 
-> Tracking issue: [#8](https://github.com/asty8926/side-scrolling-game/issues/8) · Milestone epic: [#18](https://github.com/asty8926/side-scrolling-game/issues/18) · Research: [#16](https://github.com/asty8926/side-scrolling-game/issues/16)
+> Tracking issue: [#29](https://github.com/asty8926/side-scrolling-game/issues/29) · Milestone epic: [#36](https://github.com/asty8926/side-scrolling-game/issues/36) · Research: [#34](https://github.com/asty8926/side-scrolling-game/issues/34)
 
 ## What it is in Elsword
 

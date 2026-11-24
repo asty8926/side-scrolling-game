@@ -4,7 +4,7 @@ system: game-feel
 priority: P0
 milestone: M1 (core), polish continues every milestone
 status: draft
-issue: 5
+issue: 26
 sources:
   - https://elwiki.net/w/Commands
   - https://elwiki.net/w/Skills
@@ -15,7 +15,7 @@ sources:
 
 # Game feel: hit-stop, impact, input buffering, cancels into skills
 
-> Tracking issue: [#5](https://github.com/asty8926/side-scrolling-game/issues/5) · Milestone epic: [#18](https://github.com/asty8926/side-scrolling-game/issues/18) · Research: [#14](https://github.com/asty8926/side-scrolling-game/issues/14)
+> Tracking issue: [#26](https://github.com/asty8926/side-scrolling-game/issues/26) · Milestone epic: [#36](https://github.com/asty8926/side-scrolling-game/issues/36) · Research: [#14](https://github.com/asty8926/side-scrolling-game/issues/14)
 
 ## What it is in Elsword
 
