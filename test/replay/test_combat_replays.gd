@@ -107,3 +107,87 @@ func test_invalid_character_is_refused_with_a_message() -> void:
 	var data: CharacterData = CharacterData.new()
 	assert_eq(world.add_character(data), -1)
 	assert_push_error_count(1)
+
+
+func _arrow_world(dummy_x: int) -> SimWorld:
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	world.fighters[1].x = dummy_x
+	return world
+
+
+func _press_x_then_wait(world: SimWorld, ticks: int) -> Array[String]:
+	var lines: Array[String] = []
+	var previous: int = 0
+	for tick: int in ticks:
+		var held: int = X if tick == 0 else 0
+		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+		for event: SimEvent in world.events:
+			lines.append(event.to_text())
+	return lines
+
+
+func test_arrow_is_a_projectile_that_travels_to_the_dummy() -> void:
+	var shot: ProjectileData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[4].projectiles[0]
+	# Spawns at x = 400 on move tick 6, moves `speed` per tick from tick 7 and
+	# hits once its front reaches the dummy's hurtbox (dummy 6 m away).
+	var world: SimWorld = _arrow_world(6000)
+	var lines: Array[String] = _press_x_then_wait(world, 40)
+	var fired: int = -1
+	var hit_tick: int = -1
+	for line: String in lines:
+		if line.contains(":projectile:") and fired < 0:
+			fired = int(line.split(":")[0])
+		if line.contains(":hit:") and hit_tick < 0:
+			hit_tick = int(line.split(":")[0])
+	assert_eq(fired, 6, "fired on the spawn tick")
+	var hurt_left: int = 6000 - 700 / 2
+	var ticks_needed: int = ceili(float(hurt_left - shot.width / 2 - shot.offset_x) / float(shot.speed))
+	assert_eq(hit_tick, fired + ticks_needed, "flight time = distance / speed")
+	assert_eq(world.projectiles.size(), 0, "the arrow is gone after its hit")
+
+
+func test_arrow_fired_away_from_the_dummy_misses_and_expires() -> void:
+	var world: SimWorld = _arrow_world(-3000)  # behind the ranger, who faces right
+	var lines: Array[String] = _press_x_then_wait(world, 60)
+	var joined: String = "\n".join(lines)
+	assert_false(joined.contains(":hit:"), "no hit behind")
+	assert_true(joined.contains(":projectile_end:"), "the arrow ends (wall or lifetime)")
+	assert_eq(world.projectiles.size(), 0)
+
+
+func test_snapshot_keeps_an_arrow_in_flight() -> void:
+	var world: SimWorld = _arrow_world(9000)
+	_press_x_then_wait(world, 10)
+	assert_eq(world.projectiles.size(), 1, "one arrow in flight")
+	var copy: SimWorld = SimSetup.create(&"training", 1)
+	assert_eq(copy.restore(world.snapshot()), OK)
+	assert_eq(copy.state_hash(), world.state_hash())
+	_press_x_then_wait(world, 30)
+	_press_x_then_wait(copy, 30)
+	assert_eq(copy.state_hash(), world.state_hash(), "same future from the snapshot")
+
+
+func test_projectile_validator() -> void:
+	var move: MoveData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[4].duplicate(true) as MoveData
+	move.projectiles[0].spawn_tick = 0
+	assert_string_contains("; ".join(move.validate()), "spawn_tick 0 is outside the move's active phase")
+	move.projectiles[0].spawn_tick = 6
+	move.projectiles[0].speed = 0
+	assert_string_contains("; ".join(move.validate()), "speed")
+
+
+func test_projectile_view_draws_arrows_in_flight() -> void:
+	var driver: SimDriver = SimDriver.new()
+	driver.setup = &"training"
+	add_child_autofree(driver)
+	driver.world.fighters[1].x = 9000
+	var view: ProjectileView = ProjectileView.new()
+	view.driver = driver
+	add_child_autofree(view)
+	_press_x_then_wait(driver.world, 10)
+	view._on_ticked(10)
+	assert_eq(view.drawn_count(), 1, "one arrow mesh")
+	_press_x_then_wait(driver.world, 40)
+	view._on_ticked(50)
+	assert_eq(view.drawn_count(), 0, "removed after the hit")

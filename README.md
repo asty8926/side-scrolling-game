@@ -25,7 +25,7 @@ What to try:
 - ↑ jumps up one platform; ↑ again in the air (double jump) reaches two.
 - ↓ while standing on a platform drops through it.
 - The camera follows sideways once you leave the middle of the screen, and stops at the room walls.
-- A grey training dummy stands 1 m in front of you. Press **W** (AZERTY; **Z** on QWERTY) up to 4 times for the 4-kick string `ZZZZ`, or **X** up to 4 times for the arrow string `XXXX`. Mashing early is fine (the press is buffered); pressing too late ends the string. The orange box shows where an attack can hit, only on its active ticks.
+- A grey training dummy stands 1 m in front of you. Press **W** (AZERTY; **Z** on QWERTY) up to 4 times for the 4-kick string `ZZZZ`, or **X** up to 4 times for the arrow string `XXXX` (W/Z attacks are kicks; X attacks shoot real arrows that fly across the room, shown in pink, and hit the first character they touch; the third X shoots two). Mashing early is fine (the press is buffered); pressing too late ends the string. The orange box shows where a kick can hit, only on its active ticks.
 
 ![Test room](docs/evidence/42-test-room.png)
 
@@ -52,7 +52,7 @@ Double-tap window and input buffer are in `data/input_settings.tres` (open it in
 Everything is a data file you edit in the Inspector (double-click it in the FileSystem dock, change a value, press **Ctrl+S** / **Cmd+S**, then F5 again):
 
 - `data/rooms/test_room.tres`: walls, floor and the **Platforms** list (x position, tier = how many jumps up, width, thickness). Add or move a platform and both what you see and what you can stand on change.
-- `data/characters/ranger_moves.tres`: every attack of the `ZZZZ` and `XXXX` strings. Each move has its frame data (startup, active, recovery ticks), its hitboxes (position, size, which ticks they are active), damage %, hitstun, KD, and which move it cancels into and when. A mistake (for example a hitbox active outside the move's active ticks) is reported with a clear message when the game starts.
+- `data/characters/ranger_moves.tres`: every attack of the `ZZZZ` and `XXXX` strings. Each move has its frame data (startup, active, recovery ticks), its kick hitboxes (position, size, which ticks they are active) or its arrows (**Projectiles**: spawn tick, spawn offset, speed in sub-units per tick, lifetime, size), damage %, hitstun, KD, and which move it cancels into and when. A mistake (for example a hitbox active outside the move's active ticks) is reported with a clear message when the game starts.
 - `data/characters/ranger.tres` / `dummy.tres`: HP, attack and the hurtbox (where the character can be hit).
 - `data/characters/ranger_movement.tres`: walk and dash speed, jump strength, gravity. Platform tiers follow the jump height, so they stay one jump apart.
 - Camera feel: click the **SideCamera** node in `game/main.tscn` and tune distance, height, dead zone and smoothing in the Inspector.

@@ -13,6 +13,8 @@ extends Resource
 enum AttackButton { Z, X }
 ## Most hitboxes per move, so hit keys (hitboxes x fighters) always fit a snapshot.
 const MAX_HITBOXES: int = SimFighter.MAX_HIT_KEYS / SimWorld.MAX_FIGHTERS
+## Most projectiles one move fires. # proposal, tune
+const MAX_PROJECTILES: int = 8
 ## How the move can start when no move is playing.
 enum Start {
 	## Only as the next hit of a string (via another move's cancel_into).
@@ -34,7 +36,10 @@ enum Start {
 @export_range(1, 120, 1, "suffix:ticks") var active: int = 3
 ## Ticks after the attack before the fighter is free. # proposal, tune
 @export_range(0, 180, 1, "suffix:ticks") var recovery: int = 14
+## Melee boxes (kicks).
 @export var hitboxes: Array[HitboxData] = []
+## Projectiles fired (arrows), each hitting with this move's damage/hitstun/KD.
+@export var projectiles: Array[ProjectileData] = []
 
 @export_group("On hit")
 ## Percent of the attacker's attack stat per hit (ElWiki % where sourced).
@@ -88,6 +93,15 @@ func validate() -> Array[String]:
 			continue
 		for problem: String in box.validate(startup, startup + active - 1):
 			problems.append("hitbox %d: %s" % [i, problem])
+	if projectiles.size() > MAX_PROJECTILES:
+		problems.append("%d projectiles, at most %d per move" % [projectiles.size(), MAX_PROJECTILES])
+	for i: int in projectiles.size():
+		var shot: ProjectileData = projectiles[i]
+		if shot == null:
+			problems.append("projectile %d is empty" % i)
+			continue
+		for problem: String in shot.validate(startup, startup + active - 1):
+			problems.append("projectile %d: %s" % [i, problem])
 	if not cancel_into.is_empty() and (cancel_from < 0 or cancel_from > cancel_to or cancel_to >= total):
 		problems.append("cancel window %d..%d must be inside the move (0..%d)" % [cancel_from, cancel_to, total - 1])
 	if root_motion.size() > total:

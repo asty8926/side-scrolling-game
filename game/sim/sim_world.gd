@@ -13,7 +13,7 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 4
+const SNAPSHOT_VERSION: int = 5
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
 ## Most fighters (players + dummies/mobs) a world and its snapshot hold.
@@ -44,6 +44,10 @@ var input_settings: InputSettings = InputSettings.new()
 var tier_height: int = 0
 ## Player-controlled fighters, stable insertion order.
 var fighters: Array[SimFighter] = []
+## Projectiles in flight, in creation (id) order.
+var projectiles: Array[SimProjectile] = []
+## Most projectiles alive at once (a snapshot limit).
+const MAX_PROJECTILES: int = 64
 ## Static character data, indexed by each fighter's `character` field.
 var characters: Array[CharacterData] = []
 ## Entities in stable insertion order.
@@ -179,6 +183,9 @@ func step(inputs: Array[InputFrame]) -> void:
 		SimCombat.apply_motion(self, fighter)
 	for fighter: SimFighter in fighters:
 		SimCombat.resolve_hits(self, fighter)
+	SimCombat.step_projectiles(self)
+	for fighter: SimFighter in fighters:
+		SimCombat.fire_projectiles(self, fighter)
 	for fighter: SimFighter in fighters:
 		SimCombat.advance(fighter)
 
@@ -187,6 +194,13 @@ func step(inputs: Array[InputFrame]) -> void:
 		entity.y += entity.vy
 
 	tick += 1
+
+
+## Next id for a fighter, entity or projectile (shared, increasing).
+func take_id() -> int:
+	var id: int = _next_entity_id
+	_next_entity_id += 1
+	return id
 
 
 ## Records an event for this tick (used by sim systems).
@@ -220,6 +234,9 @@ func snapshot() -> PackedByteArray:
 	buf.put_32(fighters.size())
 	for fighter: SimFighter in fighters:
 		fighter.write_to(buf)
+	buf.put_32(projectiles.size())
+	for projectile: SimProjectile in projectiles:
+		projectile.write_to(buf)
 	buf.put_32(entities.size())
 	for entity: SimEntity in entities:
 		buf.put_64(entity.id)
@@ -295,6 +312,20 @@ func restore(data: PackedByteArray) -> Error:
 			return ERR_INVALID_DATA
 		new_fighters.append(fighter)
 	if buf.get_available_bytes() < 4:
+		push_error("SimWorld.restore: snapshot truncated before the projectile list")
+		return ERR_INVALID_DATA
+	var projectile_count: int = buf.get_32()
+	if projectile_count < 0 or projectile_count > MAX_PROJECTILES:
+		push_error("SimWorld.restore: invalid projectile count %d" % projectile_count)
+		return ERR_INVALID_DATA
+	var new_projectiles: Array[SimProjectile] = []
+	for i: int in projectile_count:
+		var projectile: SimProjectile = SimProjectile.read_from(buf)
+		if projectile == null or SimCombat.projectile_data(self, projectile) == null:
+			push_error("SimWorld.restore: invalid projectile %d" % i)
+			return ERR_INVALID_DATA
+		new_projectiles.append(projectile)
+	if buf.get_available_bytes() < 4:
 		push_error("SimWorld.restore: snapshot truncated before the entity list")
 		return ERR_INVALID_DATA
 	var count: int = buf.get_32()
@@ -322,6 +353,13 @@ func restore(data: PackedByteArray) -> Error:
 		last_id = fighter.id
 	var last_fighter_id: int = last_id
 	last_id = 0
+	for projectile: SimProjectile in new_projectiles:
+		if projectile.id <= last_id:
+			push_error("SimWorld.restore: projectile ids must be positive and increasing")
+			return ERR_INVALID_DATA
+		last_id = projectile.id
+	last_fighter_id = maxi(last_fighter_id, last_id)
+	last_id = 0
 	for entity: SimEntity in new_entities:
 		if entity.id <= last_id:
 			push_error("SimWorld.restore: entity ids must be positive and increasing (got %d after %d)" % [entity.id, last_id])
@@ -342,6 +380,7 @@ func restore(data: PackedByteArray) -> Error:
 	_next_entity_id = new_next_id
 	histories = new_histories
 	fighters = new_fighters
+	projectiles = new_projectiles
 	entities = new_entities
 	return OK
 

@@ -102,7 +102,80 @@ static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 				world.emit_hit(f.id, target.id, move, attack * move.damage_percent / 100)
 
 
-## Step 3: the move advances to its next tick.
+## Step 3: projectiles already in flight move, then hit the first hurtbox they
+## overlap (fighters in id order) or vanish at a wall / end of lifetime.
+static func step_projectiles(world: SimWorld) -> void:
+	var alive: Array[SimProjectile] = []
+	for projectile: SimProjectile in world.projectiles:
+		var shot: ProjectileData = projectile_data(world, projectile)
+		projectile.x += projectile.dir * shot.speed
+		projectile.ticks_left -= 1
+		var hit: bool = _projectile_hit(world, projectile, shot)
+		var inside: bool = projectile.x >= world.room.left and projectile.x <= world.room.right
+		if not hit and inside and projectile.ticks_left > 0:
+			alive.append(projectile)
+		elif not hit:
+			world.emit_event(&"projectile_end", projectile.owner, 0, _move(world, projectile).id)
+	world.projectiles = alive
+
+
+## Step 4: projectiles fired on this move tick appear at their spawn point
+## (they first move and can hit on the next tick).
+static func fire_projectiles(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null:
+		return
+	for index: int in move.projectiles.size():
+		var shot: ProjectileData = move.projectiles[index]
+		if shot.spawn_tick != f.move_tick or world.projectiles.size() >= SimWorld.MAX_PROJECTILES:
+			continue
+		var projectile: SimProjectile = SimProjectile.new()
+		projectile.id = world.take_id()
+		projectile.owner = f.id
+		projectile.character = f.character
+		projectile.move = f.move
+		projectile.index = index
+		projectile.x = f.x + shot.offset_x * f.facing
+		projectile.y = f.y + shot.offset_y
+		projectile.dir = f.facing
+		projectile.ticks_left = shot.lifetime_ticks
+		world.projectiles.append(projectile)
+		world.emit_event(&"projectile", f.id, 0, move.id)
+
+
+## The data of a projectile in flight, or null when it no longer exists.
+static func projectile_data(world: SimWorld, projectile: SimProjectile) -> ProjectileData:
+	var move: MoveData = _move(world, projectile)
+	if move == null or projectile.index >= move.projectiles.size():
+		return null
+	return move.projectiles[projectile.index]
+
+
+static func _move(world: SimWorld, projectile: SimProjectile) -> MoveData:
+	if projectile.character >= world.characters.size():
+		return null
+	var moveset: MoveSet = world.characters[projectile.character].moveset
+	if moveset == null or projectile.move >= moveset.moves.size():
+		return null
+	return moveset.moves[projectile.move]
+
+
+static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: ProjectileData) -> bool:
+	for target: SimFighter in world.fighters:
+		if target.id == projectile.owner or target.character >= world.characters.size():
+			continue
+		var hurt: HurtboxData = world.characters[target.character].hurtbox
+		var bx: int = target.x + hurt.offset_x * target.facing
+		var by: int = target.y + hurt.offset_y
+		if absi(projectile.x - bx) * 2 <= shot.width + hurt.width and projectile.y <= by + hurt.height and projectile.y + shot.height >= by:
+			var move: MoveData = _move(world, projectile)
+			var attack: int = world.characters[projectile.character].attack
+			world.emit_hit(projectile.owner, target.id, move, attack * move.damage_percent / 100)
+			return true
+	return false
+
+
+## Step 5: the move advances to its next tick.
 static func advance(f: SimFighter) -> void:
 	if f.move != SimFighter.NO_MOVE:
 		f.move_tick += 1
