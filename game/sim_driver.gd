@@ -43,6 +43,12 @@ func _ready() -> void:
 	add_child(_sampler)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	# Debug only: F4 resets the training dummy between two ticks.
+	if OS.is_debug_build() and event.is_action_pressed(&"debug_reset") and not event.is_echo():
+		world.reset_dummies()
+
+
 func _physics_process(_delta: float) -> void:
 	step_once()
 

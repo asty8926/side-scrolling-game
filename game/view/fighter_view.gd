@@ -14,6 +14,8 @@ extends Node3D
 @export var nose_color: Color = Color(0.98, 0.85, 0.25)
 ## Color of the attack boxes shown while a move's hitboxes are active.
 @export var hit_color: Color = Color(1.0, 0.45, 0.1, 0.45)
+## Shows HP, KD, combo and last damage above the head (training dummy).
+@export var show_readout: bool = false
 ## Seconds to turn around when the facing flips (0 = instant).
 @export_range(0.0, 0.5, 0.01, "suffix:s") var turn_time: float = 0.06
 
@@ -24,6 +26,7 @@ var _has_state: bool = false
 var _body: Node3D
 var _hit_meshes: Array[MeshInstance3D] = []
 var _hit_material: StandardMaterial3D
+var _readout: Label3D
 
 
 func _ready() -> void:
@@ -71,6 +74,8 @@ func _read_state(snap: bool) -> void:
 	_current = position_now
 	_facing = fighter.facing
 	_show_hitboxes(fighter)
+	if _readout != null:
+		_readout.text = readout_text(fighter)
 	if not _has_state:
 		position = position_now
 		_body.rotation.y = 0.0 if _facing == SimFighter.RIGHT else PI
@@ -101,6 +106,29 @@ func _build_placeholder() -> void:
 	# Body faces +X when rotation.y == 0.
 	nose_instance.position = Vector3(capsule.radius + 0.1, height * 0.75, 0.0)
 	_body.add_child(nose_instance)
+	if show_readout:
+		_readout = Label3D.new()
+		_readout.name = "Readout"
+		_readout.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_readout.pixel_size = 0.008
+		_readout.no_depth_test = true
+		_readout.font_size = 40
+		_readout.outline_size = 12
+		_readout.position = Vector3(0.0, height + 1.2, 0.0)
+		add_child(_readout)
+
+
+## The above-head text for `fighter` (public for tests).
+static func readout_text(fighter: SimFighter) -> String:
+	var lines: PackedStringArray = PackedStringArray([
+		"HP %d" % fighter.hp,
+		"KD %d" % fighter.kd,
+		"Combo %d" % fighter.combo,
+		"Last hit %d" % fighter.last_damage,
+	])
+	if fighter.hitstun > 0:
+		lines.append("hitstun %d" % fighter.hitstun)
+	return "\n".join(lines)
 
 
 ## Shows the hitboxes that were checked on the tick just simulated (the sim

@@ -60,6 +60,7 @@ driver = NodePath("../SimDriver")
 script = ExtResource("5_fighter")
 driver = NodePath("../SimDriver")
 fighter_index = 1
+show_readout = true
 body_color = Color(0.6, 0.6, 0.62, 1)
 nose_color = Color(0.3, 0.3, 0.32, 1)
 
