@@ -41,6 +41,11 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 		return
 	var move: MoveData = current_move(world, f)
 	if move != null and f.move_tick >= move.length():
+		# A late hit can leave a gap after the last root-motion tick; finish
+		# the pass (clamped at walls and edges) before turning or recovering.
+		_finish_pass(world, f)
+		if move.turn_at_end:
+			_face_hit_targets(world, f)
 		f.move = SimFighter.NO_MOVE
 		f.move_tick = 0
 		f.idle_ticks = 0
@@ -51,6 +56,12 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 			for next_id: StringName in move.cancel_into:
 				var next: int = moveset.index_of(next_id)
 				if next >= 0 and history.buffered_press(_button(moveset.moves[next]), world.input_settings.buffer_ticks):
+					# Finish a short pass before the cancel (an early Z must
+					# not leave the ranger on the near side). Then face the
+					# target so the next Z still points at them.
+					_finish_pass(world, f)
+					if move.turn_at_end:
+						_face_hit_targets(world, f)
 					_start(world, f, next)
 					return
 		return
@@ -58,9 +69,11 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	f.idle_ticks = mini(f.idle_ticks + 1, InputHistory.CAPACITY)
 	if not f.is_grounded():
 		return  # air commands are M1
+	# While dashing (`>>`), dash attacks; otherwise neutral ones.
+	var wanted: MoveData.Start = MoveData.Start.DASH if f.dash_dir != 0 else MoveData.Start.NEUTRAL
 	for i: int in moveset.moves.size():
 		var candidate: MoveData = moveset.moves[i]
-		if candidate.start == MoveData.Start.NEUTRAL and history.buffered_press(_button(candidate), buffer):
+		if candidate.start == wanted and history.buffered_press(_button(candidate), buffer):
 			_start(world, f, i)
 			return
 
@@ -87,8 +100,161 @@ static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	var move: MoveData = current_move(world, f)
 	if move == null:
 		return
+	var motion: int = move.motion_at(f.move_tick) * f.facing
+	# Root motion can be 0 on later pass ticks (the slash's array ends
+	# before pass_to); still close any remaining gap to the far side.
+	if motion != 0:
+		var m: MovementParams = world.movement
+		var low: int = world.room.left + m.half_width
+		var high: int = world.room.right - m.half_width
+		if f.ground >= 0:
+			# Stop at the platform edge (M0 choice, docs/systems/04 open question 3).
+			var platform: RoomPlatform = world.room.platforms[f.ground]
+			low = maxi(low, mini(f.x, platform.left()))
+			high = mini(high, maxi(f.x, platform.right()))
+		var before: int = f.x
+		f.x = clampi(f.x + motion, low, high)
+		_carry(world, f, f.x - before)
+	_complete_pass(world, f)
+
+
+## Carries fighters already hit by `f`'s current move, by the motion `f`
+## actually travelled this tick (so a wall or platform edge stops both).
+static func _carry(world: SimWorld, f: SimFighter, delta: int) -> void:
+	if delta == 0:
+		return
+	var move: MoveData = current_move(world, f)
+	if move == null or not move.carries_at(f.move_tick):
+		return
 	var m: MovementParams = world.movement
-	f.x = clampi(f.x + move.motion_at(f.move_tick) * f.facing, world.room.left + m.half_width, world.room.right - m.half_width)
+	var low: int = world.room.left + m.half_width
+	var high: int = world.room.right - m.half_width
+	for target: SimFighter in world.fighters:
+		if target.id != f.id and _already_hit(f, target.id):
+			target.x = clampi(target.x + delta, low, high)
+
+
+## Whether this move activation has already recorded a hit on `target_id`.
+static func _already_hit(f: SimFighter, target_id: int) -> bool:
+	for key: int in f.hit_keys:
+		if (key & 0xFFFFFFFF) == target_id:
+			return true
+	return false
+
+
+## The already-hit fighter with the lowest id, or null.
+static func _first_hit_target(world: SimWorld, f: SimFighter) -> SimFighter:
+	var found: SimFighter = null
+	for other: SimFighter in world.fighters:
+		if other.id != f.id and _already_hit(f, other.id):
+			if found == null or other.id < found.id:
+				found = other
+	return found
+
+
+## Face a struck target. If the slash could not pass (a wall), this keeps the
+## next Z pointed at them instead of always reversing.
+static func _face_hit_targets(world: SimWorld, f: SimFighter) -> void:
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null or target.x == f.x:
+		return
+	f.facing = 1 if target.x > f.x else -1
+
+
+## After a pass-through hit, close any remaining gap to the far side over the
+## rest of the pass window (clamped at walls and platform edges). A fixed
+## root-motion length alone is not enough when the target is further away.
+static func _complete_pass(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null or not move.passes_at(f.move_tick):
+		return
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null:
+		return
+	var far: int = _far_side_x(world, f, target)
+	var remaining: int = move.pass_to - f.move_tick + 1
+	if remaining < 1:
+		return
+	_step_toward(f, far, remaining)
+
+
+## Snap to the far side in one step (still clamped at walls and edges). Used
+## when the move ends or cancels, so a late hit or an early cancel cannot
+## leave the ranger short of a completed pass.
+static func _finish_pass(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null or move.pass_from < 0:
+		return
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null:
+		return
+	_step_toward(f, _far_side_x(world, f, target), 1)
+
+
+## Far-side x next to `target`, clamped at room walls and at the platform edge.
+static func _far_side_x(world: SimWorld, f: SimFighter, target: SimFighter) -> int:
+	if world.room == null or world.movement == null:
+		return f.x
+	var m: MovementParams = world.movement
+	var low: int = world.room.left + m.half_width
+	var high: int = world.room.right - m.half_width
+	if f.ground >= 0:
+		var platform: RoomPlatform = world.room.platforms[f.ground]
+		low = maxi(low, mini(f.x, platform.left()))
+		high = mini(high, maxi(f.x, platform.right()))
+	return clampi(target.x + f.facing * (2 * m.half_width), low, high)
+
+
+static func _step_toward(f: SimFighter, far: int, remaining: int) -> void:
+	if remaining < 1:
+		return
+	if f.facing > 0 and f.x < far:
+		var step: int = (far - f.x + remaining - 1) / remaining
+		f.x = mini(f.x + step, far)
+	elif f.facing < 0 and f.x > far:
+		var step: int = (f.x - far + remaining - 1) / remaining
+		f.x = maxi(f.x - step, far)
+
+
+## Step 1b: fighters' pushboxes push each other apart (pairs in fighter order),
+## except while one of them passes through (MoveData pass window). Walls win:
+## a fighter pinned to a wall leaves the whole push to the other one.
+static func separate(world: SimWorld) -> void:
+	if world.room == null or world.movement == null:
+		return
+	var m: MovementParams = world.movement
+	var low: int = world.room.left + m.half_width
+	var high: int = world.room.right - m.half_width
+	for i: int in world.fighters.size():
+		for j: int in range(i + 1, world.fighters.size()):
+			var a: SimFighter = world.fighters[i]
+			var b: SimFighter = world.fighters[j]
+			if is_passing(world, a) or is_passing(world, b):
+				continue
+			if absi(a.y - b.y) >= m.height:
+				continue
+			var gap: int = 2 * m.half_width - absi(a.x - b.x)
+			if gap <= 0:
+				continue
+			# The one further left (lower id on a tie) goes left.
+			var left: SimFighter = a if a.x < b.x or (a.x == b.x and a.id < b.id) else b
+			var right: SimFighter = b if left == a else a
+			var left_x: int = clampi(left.x - gap / 2, low, high)
+			var right_x: int = clampi(right.x + (gap - gap / 2), low, high)
+			# Whatever one could not move (wall), the other takes.
+			if right_x - left_x < 2 * m.half_width:
+				if left_x == low:
+					right_x = mini(left_x + 2 * m.half_width, high)
+				else:
+					left_x = maxi(right_x - 2 * m.half_width, low)
+			left.x = left_x
+			right.x = right_x
+
+
+## Whether `f`'s pushbox is off this tick (passing through fighters).
+static func is_passing(world: SimWorld, f: SimFighter) -> bool:
+	var move: MoveData = current_move(world, f)
+	return move != null and move.passes_at(f.move_tick)
 
 
 ## A melee contact found in resolve_hits, applied in apply_hits.

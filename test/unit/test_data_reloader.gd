@@ -36,6 +36,18 @@ func _save_with(change: Callable) -> void:
 	assert_eq(ResourceSaver.save(edited, MOVES), OK)
 
 
+## Drops `moves[0]` and any cancel_into that pointed at it, so the saved set stays valid.
+func _drop_first_move(moves: MoveSet) -> void:
+	var removed: StringName = moves.moves[0].id
+	moves.moves.remove_at(0)
+	for move: MoveData in moves.moves:
+		var kept: Array[StringName] = []
+		for id: StringName in move.cancel_into:
+			if id != removed:
+				kept.append(id)
+		move.cancel_into = kept
+
+
 func test_changed_damage_is_used_by_the_world() -> void:
 	assert_has(_reloader.watched_paths(), MOVES, "the moves file is watched")
 	_save_with(func(moves: MoveSet) -> void: moves.moves[0].damage_percent = 999)
@@ -109,7 +121,7 @@ func test_a_fighter_follows_its_move_by_id_when_moves_shift() -> void:
 	var fighter: SimFighter = _driver.world.fighters[0]
 	fighter.move = 1  # ranger_z2
 	fighter.move_tick = 4
-	_save_with(func(moves: MoveSet) -> void: moves.moves.remove_at(0))  # z2 shifts into slot 0
+	_save_with(_drop_first_move)  # z2 shifts into slot 0
 	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
 	assert_eq(fighter.move, 0, "still playing z2, now in slot 0")
 	assert_eq(fighter.move_tick, 4)
@@ -119,7 +131,7 @@ func test_a_fighter_whose_move_was_removed_stops_it() -> void:
 	var fighter: SimFighter = _driver.world.fighters[0]
 	fighter.move = 0  # ranger_z1
 	fighter.move_tick = 3
-	_save_with(func(moves: MoveSet) -> void: moves.moves.remove_at(0))
+	_save_with(_drop_first_move)
 	assert_eq(_reloader.reload_path(MOVES), [] as Array[String])
 	assert_eq(fighter.move, SimFighter.NO_MOVE, "z1 is gone, z2 (now in slot 0) does not take over")
 

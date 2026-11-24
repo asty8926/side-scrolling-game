@@ -61,8 +61,30 @@ enum Start {
 
 @export_group("Motion")
 ## Forward sub-units moved on each move tick (index = move tick, missing = 0;
-## negative = backward). # proposal, tune
+## negative = backward). Root motion stops at walls and at platform edges
+## (M0 choice for docs/systems/04 open question 3). # proposal, tune
 @export var root_motion: PackedInt32Array = PackedInt32Array()
+## First move tick with the pushbox off, so the fighter passes through other
+## fighters (the `>>ZX` slash-through); -1 = never. # proposal, tune
+@export_range(-1, 300, 1, "suffix:tick") var pass_from: int = -1
+## Last move tick with the pushbox off (inclusive). # proposal, tune
+@export_range(-1, 300, 1, "suffix:tick") var pass_to: int = -1
+## Turn around when the move ends (face the target you passed). # proposal, tune
+@export var turn_at_end: bool = false
+## Last move tick on which a fighter already hit by this move is carried
+## along by the attacker's actual root motion that tick; -1 = no carry.
+## # proposal, tune
+@export_range(-1, 300, 1, "suffix:tick") var carry_to: int = -1
+
+
+## Whether the pushbox is off on move tick `move_tick`.
+func passes_at(move_tick: int) -> bool:
+	return pass_from >= 0 and move_tick >= pass_from and move_tick <= pass_to
+
+
+## Whether a previously hit target is carried on move tick `move_tick`.
+func carries_at(move_tick: int) -> bool:
+	return carry_to >= 0 and move_tick <= carry_to
 
 
 ## Total ticks of the move.
@@ -106,6 +128,10 @@ func validate() -> Array[String]:
 			problems.append("projectile %d: %s" % [i, problem])
 	if not cancel_into.is_empty() and (cancel_from < 0 or cancel_from > cancel_to or cancel_to >= total):
 		problems.append("cancel window %d..%d must be inside the move (0..%d)" % [cancel_from, cancel_to, total - 1])
+	if pass_from >= 0 and (pass_from > pass_to or pass_to >= total):
+		problems.append("pass window %d..%d must be inside the move (0..%d)" % [pass_from, pass_to, total - 1])
+	if carry_to >= 0 and carry_to >= total:
+		problems.append("carry_to %d must be inside the move (0..%d)" % [carry_to, total - 1])
 	if root_motion.size() > total:
 		problems.append("root_motion has %d entries but the move lasts %d ticks" % [root_motion.size(), total])
 	return problems

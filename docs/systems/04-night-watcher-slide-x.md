@@ -60,8 +60,8 @@ It is a movement + attack in one: you close distance, hit, and **swap sides** wi
 ## Open questions
 
 1. Name in our game for the blade and the move (can't ship "Erendil").
-2. After passing through, does the character auto-turn to face the enemy (Elsword "slice the enemy's back" suggests she ends behind, facing away, then the player turns)? Needs reference video.
-3. Platform edges: stop at the edge, or allow sliding off? Elsword lets characters fall off platforms with dashes; decide by feel.
+2. After passing through, does the character auto-turn to face the enemy (Elsword "slice the enemy's back" suggests she ends behind, facing away, then the player turns)? Needs reference video. **M0 choice:** auto-turn (`turn_at_end` on `ranger_dash_zx`) so `WWW` continues the combo immediately; revisit in M1 with a reference video.
+3. Platform edges: stop at the edge, or allow sliding off? Elsword lets characters fall off platforms with dashes; decide by feel. **M0 choice:** stop at the platform edge (and at walls). Sliding off is M1 feel work.
 4. Can `>>ZX` be dash-canceled at the end into `ZZZ<<>`? Proposal: yes, cancel window after the slash's active frames.
 
 ## Sources

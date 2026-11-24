@@ -96,7 +96,7 @@ func test_validator_rejects_hits_before_startup_ends_and_bad_windows() -> void:
 func test_ranger_moves_are_valid_and_editable_resources() -> void:
 	var ranger: CharacterData = load(SimSetup.RANGER) as CharacterData
 	assert_eq(ranger.validate(), [] as Array[String])
-	assert_eq(ranger.moveset.moves.size(), 8, "ZZZZ and XXXX")
+	assert_eq(ranger.moveset.moves.size(), 11, "ZZZZ, XXXX and >>Z / >>ZX / >>ZZ")
 	var bad: MoveSet = ranger.moveset.duplicate(true) as MoveSet
 	bad.moves[0].cancel_into = [&"nope"] as Array[StringName]
 	assert_string_contains("; ".join(bad.validate()), "cancel_into 'nope' does not exist")
@@ -202,13 +202,23 @@ func test_fast_arrow_does_not_pass_through_a_target() -> void:
 	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "the swept box still hits the dummy")
 
 
-func test_arrow_overlapping_two_targets_at_spawn_hits_the_lower_id() -> void:
-	var world: SimWorld = _arrow_world(0)
-	var shooter_x: int = world.fighters[0].x
-	world.fighters[1].x = shooter_x + 500  # id 2, hurtbox overlaps the new arrow
+func test_arrow_overlapping_two_targets_hits_the_lower_id() -> void:
+	# Pushboxes now separate overlapping fighters, so two dummies cannot sit
+	# in the arrow's spawn box without also overlapping the shooter. Fly the
+	# arrow out, then place both hurtboxes on it (centers 650 apart, so the
+	# pushboxes do not touch; both already overlap the arrow).
+	var world: SimWorld = _arrow_world(9000)
+	_press_x_then_wait(world, 10)
+	assert_eq(world.projectiles.size(), 1)
+	var arrow_x: int = world.projectiles[0].x
 	var third: int = world.add_fighter(SimFighter.NO_PLAYER, world.fighters[1].character)
 	assert_gt(third, 0)
-	world.fighters[2].x = shooter_x + 200  # id 3, also overlaps it, further behind
-	var joined: String = "\n".join(_press_x_then_wait(world, 20))
+	world.fighters[1].x = arrow_x - 325  # id 2
+	world.fighters[2].x = arrow_x + 325  # id 3
+	world.step([InputFrame.from_held(0, 0, 0)] as Array[InputFrame])
+	var lines: PackedStringArray = PackedStringArray()
+	for event: SimEvent in world.events:
+		lines.append(event.to_text())
+	var joined: String = "\n".join(lines)
 	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "both touched at once: the lower id is hit")
 	assert_false(joined.contains(":hit:1:3:"), "one target per arrow")
