@@ -70,6 +70,8 @@ static func describe(world: SimWorld, paused: bool, fps: float) -> String:
 	lines.append("tick %d   %d FPS   %s" % [world.tick, roundi(fps), "PAUSED (F2 resume, F3 step)" if paused else "F2 pause, F3 step"])
 	for fighter: SimFighter in world.fighters:
 		lines.append(_fighter_line(world, fighter))
+	if not world.projectiles.is_empty():
+		lines.append("arrows in flight: %d" % world.projectiles.size())
 	if world.histories.size() > 0:
 		lines.append("inputs (oldest → newest): %s" % input_row(world.histories[0], INPUT_COLUMNS))
 	return "\n".join(lines)
@@ -122,7 +124,7 @@ static func symbols(bits: int) -> String:
 	return "+".join(parts)
 
 
-## Number of hitboxes drawn on the last refresh (for tests).
+## Number of hitboxes and arrows drawn on the last refresh (for tests).
 var drawn_hitboxes: int = 0
 
 
@@ -152,6 +154,14 @@ func _draw_boxes(world: SimWorld) -> void:
 			_rect(hx - box.width / 2, f.y + box.offset_y, hx + box.width / 2, f.y + box.offset_y + box.height, HITBOX_COLOR, 0.06)
 			vertex_count += 8
 			drawn_hitboxes += 1
+	# Arrows in flight hit like hitboxes: same red.
+	for projectile: SimProjectile in world.projectiles:
+		var shot: ProjectileData = SimCombat.projectile_data(world, projectile)
+		if shot == null:
+			continue
+		_rect(projectile.x - shot.width / 2, projectile.y, projectile.x + shot.width / 2, projectile.y + shot.height, HITBOX_COLOR, 0.06)
+		vertex_count += 8
+		drawn_hitboxes += 1
 	if vertex_count == 0:
 		_mesh.surface_add_vertex(Vector3.ZERO)
 		_mesh.surface_add_vertex(Vector3.ZERO)

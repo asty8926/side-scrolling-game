@@ -65,3 +65,19 @@ func test_driver_pause_and_step() -> void:
 	assert_eq(driver.world.tick, before + 1, "F3 steps exactly one tick")
 	driver._physics_process(0.016)
 	assert_eq(driver.world.tick, before + 1, "and stays paused")
+
+
+func test_arrow_in_flight_is_drawn_from_a_restored_snapshot() -> void:
+	var live: SimWorld = SimSetup.create(&"training", 1)
+	live.fighters[1].x += 8000  # far: the arrow is still flying
+	var previous: int = 0
+	for tick: int in 10:
+		var held: int = InputFrame.X if tick == 0 else 0
+		live.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+	var restored: SimWorld = SimSetup.create(&"training", 1)
+	assert_eq(restored.restore(live.snapshot()), OK)
+	var overlay: DebugOverlay = _overlay()
+	overlay.refresh(restored)
+	assert_eq(overlay.drawn_hitboxes, 1, "the arrow (x1 has no melee hitbox)")
+	assert_string_contains(DebugOverlay.describe(restored, false, 60.0), "arrows in flight: 1")
