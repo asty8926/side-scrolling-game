@@ -33,8 +33,8 @@ func validate() -> Array[String]:
 		problems.append("walk_speed must be > 0 and dash_speed >= walk_speed")
 	if jump_velocity <= 0 or double_jump_velocity <= 0 or gravity <= 0 or max_fall_speed <= 0:
 		problems.append("jump velocities, gravity and max_fall_speed must be > 0")
-	elif jump_velocity <= gravity:
-		problems.append("jump_velocity must be > gravity, or a jump never leaves the ground")
+	elif jump_velocity <= gravity or double_jump_velocity <= gravity:
+		problems.append("jump_velocity and double_jump_velocity must be > gravity, or the jump does not rise")
 	if half_width <= 0 or height <= 0 or drop_ticks < 1:
 		problems.append("half_width, height and drop_ticks must be > 0")
 	return problems

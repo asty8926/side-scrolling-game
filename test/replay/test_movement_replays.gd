@@ -201,6 +201,9 @@ func test_configure_rejects_a_jump_that_cannot_rise() -> void:
 	movement.gravity = 10
 	var problems: Array[String] = SimWorld.new(1).configure(load(SimSetup.TEST_ROOM) as RoomLayout, movement, InputSettings.new())
 	assert_gt(problems.size(), 0, "a zero-height jump is rejected")
+	var weak_double: MovementParams = MovementParams.new()
+	weak_double.double_jump_velocity = weak_double.gravity
+	assert_gt(weak_double.validate().size(), 0, "a double jump that cannot rise is rejected")
 
 
 func test_fighters_are_capped_at_the_snapshot_limit() -> void:
