@@ -191,3 +191,12 @@ func test_projectile_view_draws_arrows_in_flight() -> void:
 	_press_x_then_wait(driver.world, 40)
 	view._on_ticked(50)
 	assert_eq(view.drawn_count(), 0, "removed after the hit")
+
+
+func test_fast_arrow_does_not_pass_through_a_target() -> void:
+	var world: SimWorld = _arrow_world(2000)
+	# A deep copy, so the shared ranger data loaded by other tests is untouched.
+	world.characters[0] = world.characters[0].duplicate(true) as CharacterData
+	world.characters[0].moveset.moves[4].projectiles[0].speed = 3000
+	var joined: String = "\n".join(_press_x_then_wait(world, 20))
+	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "the swept box still hits the dummy")

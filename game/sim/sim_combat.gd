@@ -108,9 +108,10 @@ static func step_projectiles(world: SimWorld) -> void:
 	var alive: Array[SimProjectile] = []
 	for projectile: SimProjectile in world.projectiles:
 		var shot: ProjectileData = projectile_data(world, projectile)
+		var from_x: int = projectile.x
 		projectile.x += projectile.dir * shot.speed
 		projectile.ticks_left -= 1
-		var hit: bool = _projectile_hit(world, projectile, shot)
+		var hit: bool = _projectile_hit(world, projectile, shot, from_x)
 		var inside: bool = projectile.x >= world.room.left and projectile.x <= world.room.right
 		if not hit and inside and projectile.ticks_left > 0:
 			alive.append(projectile)
@@ -160,19 +161,37 @@ static func _move(world: SimWorld, projectile: SimProjectile) -> MoveData:
 	return moveset.moves[projectile.move]
 
 
-static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: ProjectileData) -> bool:
+## Hits the first hurtbox the arrow's swept box (from `from_x` to its new x)
+## overlaps: the nearest along its direction, then the lowest fighter id. A fast
+## arrow therefore never passes through a target between two ticks.
+static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: ProjectileData, from_x: int) -> bool:
+	var sweep_left: int = mini(from_x, projectile.x) - shot.width / 2
+	var sweep_right: int = maxi(from_x, projectile.x) + shot.width / 2
+	var best: SimFighter = null
+	var best_distance: int = 0
 	for target: SimFighter in world.fighters:
 		if target.id == projectile.owner or target.character >= world.characters.size():
 			continue
 		var hurt: HurtboxData = world.characters[target.character].hurtbox
 		var bx: int = target.x + hurt.offset_x * target.facing
 		var by: int = target.y + hurt.offset_y
-		if absi(projectile.x - bx) * 2 <= shot.width + hurt.width and projectile.y <= by + hurt.height and projectile.y + shot.height >= by:
-			var move: MoveData = _move(world, projectile)
-			var attack: int = world.characters[projectile.character].attack
-			world.emit_hit(projectile.owner, target.id, move, attack * move.damage_percent / 100)
-			return true
-	return false
+		var hurt_left: int = bx - hurt.width / 2
+		var hurt_right: int = bx + hurt.width / 2
+		if sweep_right < hurt_left or sweep_left > hurt_right:
+			continue
+		if projectile.y > by + hurt.height or projectile.y + shot.height < by:
+			continue
+		var near_edge: int = hurt_left if projectile.dir == SimFighter.RIGHT else hurt_right
+		var distance: int = (near_edge - from_x) * projectile.dir
+		if best == null or distance < best_distance:
+			best = target
+			best_distance = distance
+	if best == null:
+		return false
+	var move: MoveData = _move(world, projectile)
+	var attack: int = world.characters[projectile.character].attack
+	world.emit_hit(projectile.owner, best.id, move, attack * move.damage_percent / 100)
+	return true
 
 
 ## Step 5: the move advances to its next tick.
