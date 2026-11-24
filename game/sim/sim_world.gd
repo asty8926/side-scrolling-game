@@ -269,6 +269,7 @@ func step(inputs: Array[InputFrame]) -> void:
 		SimMovement.step_fighter(self, fighter, history)
 	for fighter: SimFighter in fighters:
 		SimCombat.apply_motion(self, fighter)
+	SimCombat.separate(self)
 	for fighter: SimFighter in fighters:
 		SimCombat.resolve_hits(self, fighter)
 	SimCombat.apply_hits(self)
