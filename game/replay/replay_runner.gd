@@ -14,6 +14,8 @@ class Result:
 	var checkpoint_hashes: PackedStringArray = PackedStringArray()
 	## Human-readable problems (empty when ok).
 	var problems: Array[String] = []
+	## The world after the last frame (null when the run could not start).
+	var world: SimWorld
 
 
 static func run(replay: Replay) -> Result:
@@ -49,6 +51,7 @@ static func run(replay: Replay) -> Result:
 				result.problems.append("first differing checkpoint at replay tick %d: expected hash %s, got %s" % [tick, expected, actual])
 			next_checkpoint += 1
 	result.ticks = tick
+	result.world = world
 	result.final_hash = world.state_hash()
 	if replay.expected_final_hash != "" and result.final_hash != replay.expected_final_hash:
 		result.ok = false
