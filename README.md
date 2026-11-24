@@ -47,6 +47,16 @@ Double-tap window and input buffer are in `data/input_settings.tres` (open it in
 
   The first command imports the project, the second fails if any of our scripts breaks the strict typing rules, the third runs the tests. GitHub Actions runs the same three steps on every push and pull request ([CI workflow](.github/workflows/ci.yml)).
 
+### Record a replay and turn it into a test
+
+Every combat feature ships with an input-replay test (same inputs, same result, checked in CI).
+
+1. Press **F5** to play, then **F9** to start recording. Play, then **F9** again to stop.
+2. The Output panel prints `ReplayRecorder: saved N ticks to .../replays/<date>.tres` (macOS: `~/Library/Application Support/Godot/app_userdata/side-scrolling-game/replays/`).
+3. Copy that file into `test/replay/fixtures/` and add a test next to `test/replay/test_example_replay.gd` (one line: `assert_replay("res://test/replay/fixtures/<file>.tres")`).
+
+If a change to the game rules is intentional, the replay test fails with the expected vs actual hash and the first tick where they differ: record again (or rerun `godot --headless -s res://tools/make_example_replay.gd` for the scripted example).
+
 ## Project layout
 
 | Folder | What lives there |
@@ -54,7 +64,9 @@ Double-tap window and input buffer are in `data/input_settings.tres` (open it in
 | `game/` | Scenes and scripts of the game. `game/main.tscn` is the scene that opens when you press Play. |
 | `game/sim/` | The deterministic combat simulation: plain typed GDScript, no nodes, no scene tree, integer math only (1 m = 1000 sub-units), 60 ticks per second, seeded RNG, hashable snapshots. Rules: [game/sim/README.md](game/sim/README.md). `game/sim_driver.gd` steps it once per physics tick. |
 | `game/view/` | 3D display: reads the simulation state and draws it (never changes it). |
-| `game/debug/` | Debug tools: overlays, readouts. |
+| `game/input/` | Keyboard to per-tick input frames (`InputSampler`), key labels for your layout (`KeyLabel`). |
+| `game/replay/` | Replays: the `Replay` file format, `ReplayRunner` (runs one headless), `SimSetup` (named ways to build a world). |
+| `game/debug/` | Debug tools: replay recorder (F9), later overlays and readouts. |
 | `data/` | Game data as text Resources (`.tres`): moves, hitboxes, enemies, rooms... editable in Godot's Inspector. |
 | `test/unit/`, `test/replay/` | GUT tests: unit tests and input-replay tests, run headless in CI. |
 | `tools/` | CI helper scripts (`check_scripts.gd` fails the build on any script error). |
