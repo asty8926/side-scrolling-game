@@ -13,7 +13,7 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 2
+const SNAPSHOT_VERSION: int = 3
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
 
@@ -33,6 +33,15 @@ var histories: Array[InputHistory] = []
 ## Events emitted during the last step() (cleared at the start of each step).
 ## Output only, not part of the snapshot or hash.
 var events: Array[SimEvent] = []
+## Static configuration (set once by SimSetup, not part of the snapshot).
+## Null room/movement means "no fighters" (e.g. the empty setup).
+var room: RoomLayout
+var movement: MovementParams
+var input_settings: InputSettings = InputSettings.new()
+## Derived from room + movement when the fighters' world is configured.
+var tier_height: int = 0
+## Player-controlled fighters, stable insertion order.
+var fighters: Array[SimFighter] = []
 ## Entities in stable insertion order.
 var entities: Array[SimEntity] = []
 var _next_entity_id: int = 1
@@ -41,6 +50,40 @@ var _next_entity_id: int = 1
 func _init(seed_value: int = 1) -> void:
 	world_seed = seed_value
 	rng = SimRng.new(seed_value)
+
+
+## Sets the static room/movement/input data. Returns the validation problems
+## (empty = configured). Call before adding fighters.
+func configure(room_layout: RoomLayout, movement_params: MovementParams, settings: InputSettings) -> Array[String]:
+	var problems: Array[String] = []
+	if room_layout == null or movement_params == null or settings == null:
+		problems.append("room, movement and input settings are required")
+		return problems
+	problems.append_array(movement_params.validate())
+	problems.append_array(room_layout.validate(movement_params))
+	problems.append_array(settings.validate())
+	if problems.is_empty():
+		room = room_layout
+		movement = movement_params
+		input_settings = settings
+		tier_height = room_layout.tier_height(movement_params)
+	return problems
+
+
+## Adds a fighter for `player` standing on the floor at the room spawn.
+## Returns its id, or -1 when the world has no room configured.
+func add_fighter(player: int) -> int:
+	if room == null or movement == null:
+		push_error("SimWorld.add_fighter: configure() the world first")
+		return -1
+	var fighter: SimFighter = SimFighter.new()
+	fighter.id = _next_entity_id
+	_next_entity_id += 1
+	fighter.player = player
+	fighter.x = room.spawn_x
+	fighter.y = room.floor_y
+	fighters.append(fighter)
+	return fighter.id
 
 
 ## Adds an entity, gives it the next id and returns that id.
@@ -95,6 +138,12 @@ func step(inputs: Array[InputFrame]) -> void:
 		else:
 			histories[player].push(InputFrame.new(player))
 
+	var empty_history: InputHistory = InputHistory.new()
+	empty_history.push(InputFrame.new())
+	for fighter: SimFighter in fighters:
+		var history: InputHistory = histories[fighter.player] if fighter.player < histories.size() else empty_history
+		SimMovement.step_fighter(self, fighter, history)
+
 	for entity: SimEntity in entities:
 		entity.x += entity.vx
 		entity.y += entity.vy
@@ -122,6 +171,9 @@ func snapshot() -> PackedByteArray:
 	buf.put_32(histories.size())
 	for history: InputHistory in histories:
 		history.write_to(buf)
+	buf.put_32(fighters.size())
+	for fighter: SimFighter in fighters:
+		fighter.write_to(buf)
 	buf.put_32(entities.size())
 	for entity: SimEntity in entities:
 		buf.put_64(entity.id)
@@ -183,6 +235,20 @@ func restore(data: PackedByteArray) -> Error:
 			return ERR_INVALID_DATA
 		new_histories.append(history)
 	if buf.get_available_bytes() < 4:
+		push_error("SimWorld.restore: snapshot truncated before the fighter list")
+		return ERR_INVALID_DATA
+	var fighter_count: int = buf.get_32()
+	if fighter_count < 0 or fighter_count > MAX_PLAYERS:
+		push_error("SimWorld.restore: invalid fighter count %d" % fighter_count)
+		return ERR_INVALID_DATA
+	var new_fighters: Array[SimFighter] = []
+	for i: int in fighter_count:
+		var fighter: SimFighter = SimFighter.read_from(buf)
+		if fighter == null or (room != null and fighter.ground >= room.platforms.size()):
+			push_error("SimWorld.restore: invalid fighter %d" % i)
+			return ERR_INVALID_DATA
+		new_fighters.append(fighter)
+	if buf.get_available_bytes() < 4:
 		push_error("SimWorld.restore: snapshot truncated before the entity list")
 		return ERR_INVALID_DATA
 	var count: int = buf.get_32()
@@ -199,13 +265,23 @@ func restore(data: PackedByteArray) -> Error:
 		entity.vy = buf.get_64()
 		new_entities.append(entity)
 
+	if not new_fighters.is_empty() and room == null:
+		push_error("SimWorld.restore: snapshot has fighters but this world has no room configured")
+		return ERR_INVALID_DATA
 	var last_id: int = 0
+	for fighter: SimFighter in new_fighters:
+		if fighter.id <= last_id:
+			push_error("SimWorld.restore: fighter ids must be positive and increasing")
+			return ERR_INVALID_DATA
+		last_id = fighter.id
+	var last_fighter_id: int = last_id
+	last_id = 0
 	for entity: SimEntity in new_entities:
 		if entity.id <= last_id:
 			push_error("SimWorld.restore: entity ids must be positive and increasing (got %d after %d)" % [entity.id, last_id])
 			return ERR_INVALID_DATA
 		last_id = entity.id
-	if new_next_id <= last_id:
+	if new_next_id <= maxi(last_id, last_fighter_id):
 		push_error("SimWorld.restore: next entity id %d is not above the last id %d" % [new_next_id, last_id])
 		return ERR_INVALID_DATA
 
@@ -219,6 +295,7 @@ func restore(data: PackedByteArray) -> Error:
 	input_digest = new_digest
 	_next_entity_id = new_next_id
 	histories = new_histories
+	fighters = new_fighters
 	entities = new_entities
 	return OK
 
