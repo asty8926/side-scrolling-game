@@ -16,13 +16,13 @@ static func current_move(world: SimWorld, f: SimFighter) -> MoveData:
 	return moveset.moves[f.move]
 
 
-static func phase(world: SimWorld, f: SimFighter) -> Phase:
-	var move: MoveData = current_move(world, f)
-	if move == null:
+## Phase of `move` on move tick `move_tick`.
+static func phase_at(move: MoveData, move_tick: int) -> Phase:
+	if move == null or move_tick < 0 or move_tick >= move.length():
 		return Phase.IDLE
-	if f.move_tick < move.startup:
+	if move_tick < move.startup:
 		return Phase.STARTUP
-	if f.move_tick < move.startup + move.active:
+	if move_tick < move.startup + move.active:
 		return Phase.ACTIVE
 	return Phase.RECOVERY
 

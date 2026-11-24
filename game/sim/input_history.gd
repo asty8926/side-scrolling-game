@@ -35,6 +35,11 @@ func push(frame: InputFrame) -> void:
 
 
 ## Buttons held in the newest frame.
+## Frames stored (at most CAPACITY).
+func size() -> int:
+	return _count
+
+
 func held_now() -> int:
 	return _held[_head] if _count > 0 else 0
 
