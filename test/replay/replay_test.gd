@@ -17,3 +17,26 @@ func assert_replay(path: String) -> ReplayRunner.Result:
 	var result: ReplayRunner.Result = ReplayRunner.run(replay)
 	assert_true(result.ok, "%s:\n%s" % [path, "\n".join(result.problems)])
 	return result
+
+
+## Builds a replay from press timings: `presses` maps a tick to the held mask
+## for that one tick (all other ticks hold `base`). Ticks are 0-based.
+static func tapped(setup: StringName, total_ticks: int, presses: Dictionary[int, int], base: int = 0) -> Replay:
+	var replay: Replay = Replay.new()
+	replay.setup = setup
+	replay.world_seed = 1
+	var previous: int = 0
+	for tick: int in total_ticks:
+		var held: int = base | presses.get(tick, 0)
+		replay.append_frame(InputFrame.from_held(0, previous, held))
+		previous = held
+	return replay
+
+
+## Only the events of `type`, as text lines.
+static func events_of(result: ReplayRunner.Result, type: String) -> PackedStringArray:
+	var out: PackedStringArray = PackedStringArray()
+	for line: String in result.events:
+		if line.split(":")[1] == type:
+			out.append(line)
+	return out

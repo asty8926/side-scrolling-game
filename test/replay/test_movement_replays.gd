@@ -151,6 +151,7 @@ func test_movement_params_change_behaviour() -> void:
 	var room: RoomLayout = world.room
 	var other: SimWorld = SimWorld.new(1)
 	assert_eq(other.configure(room, faster, world.input_settings).size(), 0)
+	other.add_character(load(SimSetup.RANGER) as CharacterData)
 	other.add_fighter(0)
 	for i: int in 10:
 		other.step([InputFrame.new(0, R, R if i == 0 else 0)] as Array[InputFrame])
@@ -180,6 +181,7 @@ func test_drop_with_a_one_tick_timer_still_falls_through() -> void:
 	var world: SimWorld = SimWorld.new(1)
 	var room: RoomLayout = load(SimSetup.TEST_ROOM) as RoomLayout
 	assert_eq(world.configure(room, movement, InputSettings.new()), [] as Array[String])
+	world.add_character(load(SimSetup.RANGER) as CharacterData)
 	world.add_fighter(0)
 	var previous: int = 0
 	for held: int in [U, U] + _repeat(0, 120) + [D] + _repeat(0, 120):
@@ -209,9 +211,10 @@ func test_configure_rejects_a_jump_that_cannot_rise() -> void:
 func test_fighters_are_capped_at_the_snapshot_limit() -> void:
 	var world: SimWorld = SimSetup.create(&"empty", 1)
 	assert_eq(world.configure(load(SimSetup.TEST_ROOM) as RoomLayout, load(SimSetup.RANGER_MOVEMENT) as MovementParams, InputSettings.new()), [] as Array[String])
-	for i: int in SimWorld.MAX_PLAYERS:
-		assert_gt(world.add_fighter(i), 0)
-	assert_eq(world.add_fighter(4), -1, "a fifth fighter is refused")
+	world.add_character(load(SimSetup.RANGER) as CharacterData)
+	for i: int in SimWorld.MAX_FIGHTERS:
+		assert_gt(world.add_fighter(i % SimWorld.MAX_PLAYERS), 0)
+	assert_eq(world.add_fighter(0), -1, "one fighter too many is refused")
 	assert_push_error_count(1)
 	var copy: SimWorld = SimSetup.create(&"test_room", 1)
 	assert_eq(copy.restore(world.snapshot()), OK, "a full world still restores")
