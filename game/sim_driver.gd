@@ -14,7 +14,7 @@ signal stepped(frames: Array[InputFrame])
 ## Seed of the world created when this node enters the tree.
 @export var world_seed: int = 1
 ## Which SimSetup builds the world (static data + initial entities).
-@export var setup: StringName = &"empty"
+@export var setup: StringName = &"test_room"
 
 var world: SimWorld = SimWorld.new(1)
 var input_settings: InputSettings
