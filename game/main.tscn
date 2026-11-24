@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
+
+[ext_resource type="Script" path="res://game/input/input_hint.gd" id="2_hint"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -30,3 +32,12 @@ vertical_alignment = 1
 
 [node name="SimDriver" type="Node" parent="."]
 script = ExtResource("1_driver")
+
+[node name="InputHint" type="Label" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+horizontal_alignment = 1
+script = ExtResource("2_hint")
