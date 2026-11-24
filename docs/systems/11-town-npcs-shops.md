@@ -42,14 +42,14 @@ sources:
 - [ ] Interact key (physical-position binding) opens dialogue when near an NPC; NPC name + role label above head; minimap icons by role.
 
 **Dialogue**
-- [ ] Dialogue = **node graph data** (nodes: line, choice, condition, action like `open_shop`, `give_item`, `set_flag`); stored as text (JSON/RON/YAML) so agents and diffs can read it; validated against a schema at load; hot-reloadable.
-- [ ] A **visual node editor** (M3 stretch or M3.5) that reads/writes the same files. Until then, the file format + a validator + an in-game "reload dialogues" key.
+- [ ] Dialogue = **node graph data** (nodes: line, choice, condition, action like `open_shop`, `give_item`, `set_flag`); stored as text so agents and diffs can read it; validated at load; hot-reloadable. Planned tool: [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager) (`.dialogue` text files + editor tab), see [ADR 0002](../decisions/0002-addons-and-tooling.md); re-check at M3 start.
+- [ ] A **visual node editor** (M3 stretch or M3.5) that reads/writes the same files (e.g. a small Godot `GraphEdit` editor plugin on top of Dialogue Manager files). Until then, the file format + a validator + an in-game "reload dialogues" key.
 - [ ] Portrait, name, typewriter text, choices with keyboard navigation.
 - [ ] Localization-ready: lines referenced by key (FR/EN later; Asty is French-speaking).
 
 **Shops**
 - [ ] Shop = data (inventory list, prices, stock rules); buy/sell UI with keyboard navigation; currency counter.
-- [ ] Editor or at least a single centralized `shops` config file, hot-reloadable.
+- [ ] Shops are Godot Resources (`.tres`) edited in the inspector (custom inspector if the item list gets clumsy), hot-reloadable.
 
 ## Open questions
 

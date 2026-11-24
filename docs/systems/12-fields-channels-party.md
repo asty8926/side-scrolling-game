@@ -62,7 +62,7 @@ sources:
 
 ## Open questions
 
-1. Netcode model: rollback (fighting-game style, best feel for combos) vs server-authoritative with prediction (better for 4 players + many mobs). Needs an ADR; likely server-authoritative sim + client prediction, with deterministic sim enabling replays.
+1. Netcode model: rollback (fighting-game style, best feel for combos) vs server-authoritative with prediction (better for 4 players + many mobs). Needs an ADR; likely server-authoritative sim on a **dedicated headless Godot server** (same GDScript sim) + client prediction, with the deterministic sim enabling replays. [Nakama](https://heroiclabs.com/nakama/) (self-hostable, official Godot client) for accounts, parties and matchmaking, not combat. See [ADR 0001](../decisions/0001-engine-godot.md).
 2. Hosting for public play: free tiers or self-hosting by players? (Constraint: Asty pays only tokens.)
 3. Do fields come before or after Henir? Proposal: after, they're the most server-heavy feature.
 

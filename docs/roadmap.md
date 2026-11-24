@@ -12,11 +12,11 @@ Principle: **feel first, content second, network last but planned from day one.*
 
 Co-op is the real goal, so even single-player code must be network-ready:
 
-1. **Fixed-timestep simulation** (60 ticks/s), fully separate from rendering/animation playback.
+1. **Fixed-timestep simulation** (60 ticks/s, stepped from one `_physics_process` driver in Godot), fully separate from rendering/animation playback. The sim is plain typed GDScript with no scene-tree access.
 2. The simulation's only inputs are **per-player input frames** per tick (see [systems/01-combat-inputs.md](systems/01-combat-inputs.md)). No reading the keyboard, clock, or random numbers directly inside gameplay code.
-3. **Seeded RNG** owned by the simulation; no `HashMap` iteration order or wall-clock dependence in gameplay logic.
-4. Combat physics (hitboxes, pushboxes, platforms) is **our own simple 2D code** on the gameplay plane, not a general 3D physics engine (determinism + exact feel). 3D is for visuals.
-5. Gameplay state is a plain data struct that can be **snapshotted, hashed and restored** (enables replays, rollback or server reconciliation, and CI replay tests).
+3. **Seeded RNG** owned by the simulation; no global `randi()`/`randf()`, no wall clock, no dependence on node order or signal order in gameplay logic. **Integer fixed-point** positions/velocities (no floats in hashed state), so macOS and Windows produce the same hash.
+4. Combat physics (hitboxes, pushboxes, platforms) is **our own simple 2D code** on the gameplay plane, not Godot's physics engine (determinism + exact feel). 3D nodes are for visuals only.
+5. Gameplay state is plain typed data that can be **snapshotted, hashed and restored** (enables replays, rollback or server reconciliation, and CI replay tests).
 6. Animation timing (startup/active/recovery) comes from move data, not from animation clip length, so AI-generated animations can be swapped freely.
 
 Exit check for this rule, every milestone: a recorded input replay produces the **same state hash** on two runs (and later on macOS vs Windows).
@@ -25,12 +25,12 @@ Exit check for this rule, every milestone: a recorded input replay produces the 
 
 | # | Name | Contents | Exit test (Asty plays) | System docs | Epic |
 |---|---|---|---|---|---|
-| **M0** | Vertical slice | Window + 2.5D camera, placeholder 3D character (free asset or Blender-generated), test room with platforms one jump apart, training dummy. Inputs by physical key (QWERTY+AZERTY), walk/dash/jump/double jump/drop. `ZZZZ`, `XXXX`, `>>ZZ`, `>>ZX` rough. Hot-reload of move data. Debug overlay (frame, hitboxes, KD). macOS build in CI. | On his AZERTY Mac: `WWW`, `>>WX` work out of the box; changing a damage/hitstun number in a file updates the game without restart. | 01, 04 | [#35](https://github.com/asty8926/side-scrolling-game/issues/35) |
+| **M0** | Vertical slice | Window + 2.5D camera, placeholder 3D character (free asset or Blender-generated), test room with platforms one jump apart, training dummy. Inputs by physical key (QWERTY+AZERTY), walk/dash/jump/double jump/drop. `ZZZZ`, `XXXX`, `>>ZZ`, `>>ZX` rough. Hot-reload of move data (`.tres` Resources). Debug overlay (frame, hitboxes, KD). Headless tests + replay harness in CI. Godot 4.7 project ([ADR 0001](decisions/0001-engine-godot.md)). | On his AZERTY Mac: `WWW`, `>>WX` work out of the box; changing a damage/hitstun number in a file updates the game without restart. | 01, 04 | [#35](https://github.com/asty8926/side-scrolling-game/issues/35) |
 | **M1** | Combat feel | Hit-stop, hitstun, knockback, input buffer, cancel windows, **KD gauge** + launches + reset, `ZZZ<<>` loop, `>>ZX` polished, air combos, combo counter, MP gain/spend basics, 2-3 skills with cancel-from-commands. Replay tests in CI. | The `WWW<<>` loop and `>>WX` "feel like Elsword" to him on a dummy; KD knocks down when expected. **This is the go/no-go milestone.** | 02, 03, 05, 08 | [#36](https://github.com/asty8926/side-scrolling-game/issues/36) |
 | **M2** | First dungeon | 2 mob types with AI that attack the player, collision/pushboxes, player can be hit/juggled/knocked down, 3-4 rooms with platforms and doors, mini-boss, boss (super armor, stoic threshold), results screen with rank. Dungeon data format + first version of the **room/platform editor**. | Clears the dungeon solo, gets a rank, wants to replay for S+. | 09, 02 | [#19](https://github.com/asty8926/side-scrolling-game/issues/19) |
 | **M3** | Town | One town, 3-4 NPCs, dialogue graph format + validator (+ node editor if time), shop data + UI, town ↔ dungeon flow, save file. | Walks the town, talks, buys gear, enters the dungeon. | 11 | [#20](https://github.com/asty8926/side-scrolling-game/issues/20) |
 | **M4** | Awakening & class system | Awakening beads/gauge, Ctrl (Cmd option) activation, 3-bead transformation, Nature's-Force-like system, MP passives/regen skill, more skills. | Awakens at 3 beads mid-boss and feels the power spike. | 06, 07, 08 | [#21](https://github.com/asty8926/side-scrolling-game/issues/21) |
-| **M5** | Online co-op | Netcode ADR, dedicated/authoritative server (self-hostable), party of 2-4 in the dungeon, latency tests. Windows build. | Clears the dungeon with a friend online (one on Mac, one on Windows). | 12 | [#22](https://github.com/asty8926/side-scrolling-game/issues/22) |
+| **M5** | Online co-op | Netcode ADR, dedicated headless Godot server running the same sim (authoritative, self-hostable), Nakama for parties/matchmaking if useful, party of 2-4 in the dungeon, latency tests. Windows build. | Clears the dungeon with a friend online (one on Mac, one on Windows). | 12 | [#22](https://github.com/asty8926/side-scrolling-game/issues/22) |
 | Later | Growth | Hunting fields + channels + shared towns, Henir boss rush (needs ≥4 bosses), more dungeons, a 2nd character, PvP (maybe). | - | 10, 12 | [#23](https://github.com/asty8926/side-scrolling-game/issues/23) |
 
 ## Why this order
@@ -52,6 +52,6 @@ Exit check for this rule, every milestone: a recorded input replay produces the 
 
 ## Open questions (roadmap-level)
 
-1. Engine/framework: **proposed Rust + Bevy** (code-first, open source, no editor lock-in); to be confirmed and recorded as an ADR in `docs/adr/` during M0.
+1. ~~Engine/framework~~ **Decided:** Godot 4.7 + strictly typed GDScript, see [decisions/0001-engine-godot.md](decisions/0001-engine-godot.md) (replaces the earlier Rust + Bevy proposal). Add-ons: [decisions/0002-addons-and-tooling.md](decisions/0002-addons-and-tooling.md).
 2. Gameplay plane: strictly 2D (Elsword-like) - proposal yes.
 3. Rank and MP tuning targets need Asty's playtest input in M1/M2.

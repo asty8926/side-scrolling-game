@@ -10,12 +10,15 @@ Custom tribute to Elsword: an open-source, **Elsword-inspired 2.5D action brawle
 
 > Status: **pre-production.** Design docs are drafted; no game code yet.
 
-## Planned stack (proposed, to be confirmed in an ADR during M0)
+## Stack (decided: [ADR 0001](docs/decisions/0001-engine-godot.md))
 
-- **Rust + [Bevy](https://bevyengine.org/)**: a code-first, open-source engine with no visual editor lock-in. All code is written by AI coding agents.
-- **Deterministic fixed-tick simulation** (60 Hz, input-driven, seeded RNG, snapshot/replay) from day one, so online co-op doesn't need a rewrite.
-- Custom code only where the game's identity lives: command/combo parser, KD gauge, hit-stop, cancels, collision on the 2D gameplay plane.
-- **Data-driven content** (moves, dungeons, dialogue, shops) in readable config files, **hot-reloaded** while the game runs, then **in-game editors** (dungeon platform layouts, dialogue node graphs, shops) that read and write those same files.
+- **[Godot 4.7](https://godotengine.org/)** (pinned to 4.7.2-stable), free and open source. Its editor gives us room/platform layout, an inspector for every tunable number, and an animation timeline without building our own editors.
+- **Strictly typed GDScript**: untyped declarations and unsafe access are compile errors (project settings). All code is written by AI coding agents (Grok Bot and Cursor agents).
+- **Deterministic fixed-tick combat simulation** (60 ticks/s, integer fixed-point state, per-tick input frames, seeded RNG, state hash + input-replay tests) from day one, so online co-op doesn't need a rewrite. Godot's physics engine is never used to decide combat outcomes.
+- **Data as Godot Resources (`.tres`)**: moves, hitboxes, enemies, rooms, shops, dialogue. Editable in the inspector (with custom inspector panels where it helps) and as plain text by agents. Move data hot-reloads while the game runs.
+- **Free add-ons only where they save real work**: GUT for tests, Dialogue Manager for dialogue (M3). See [ADR 0002](docs/decisions/0002-addons-and-tooling.md).
+- **Later:** a dedicated headless Godot server for online co-op, [Nakama](https://heroiclabs.com/nakama/) for accounts/parties/matchmaking, and Rust via [godot-rust/gdext](https://github.com/godot-rust/gdext) only for a measured hot spot.
+- **Builds:** macOS first (unsigned: right-click > Open or "Open Anyway" once in Privacy & Security), Windows later.
 - AI-generated 3D models and animations (glTF), with Blender scripting available. Premade assets are placeholders only.
 
 ## Docs
@@ -23,6 +26,7 @@ Custom tribute to Elsword: an open-source, **Elsword-inspired 2.5D action brawle
 - [docs/README.md](docs/README.md): start here (index, which doc to read when, Elsword glossary)
 - [docs/vision.md](docs/vision.md): goals and constraints
 - [docs/roadmap.md](docs/roadmap.md): milestones M0-M5, the determinism rule, scope guardrails
+- [docs/decisions/](docs/decisions/): architecture decision records (engine, add-ons)
 - [docs/systems/](docs/systems/): one doc per system (KD, combos, Awakening, dungeons, town, co-op...)
 - [AGENTS.md](AGENTS.md): rules for AI coding agents
 

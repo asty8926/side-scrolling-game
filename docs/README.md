@@ -8,7 +8,8 @@ Start here. These docs describe the Elsword systems Asty (GitHub `asty8926`) lov
 
 1. [vision.md](vision.md): goals, constraints, non-goals. Read before any decision.
 2. [roadmap.md](roadmap.md): milestones M0-M5, the **determinism rule**, scope-creep guardrails.
-3. The system doc(s) for the milestone you're working on (table below).
+3. [decisions/](decisions/): accepted decisions: [0001 engine (Godot 4.7 + typed GDScript)](decisions/0001-engine-godot.md), [0002 add-ons and tooling](decisions/0002-addons-and-tooling.md).
+4. The system doc(s) for the milestone you're working on (table below).
 
 ## Which file to read when
 
@@ -84,4 +85,4 @@ Milestone epics: [M0 #35](https://github.com/asty8926/side-scrolling-game/issues
 
 - Every system doc has YAML frontmatter: `title, system, priority (P0-P3), milestone, status, sources`.
 - Sections: What it is in Elsword / Why Asty loves it / What our version must do (checkbox acceptance criteria) / Open questions / Sources / Images.
-- When a doc decision is made, update the doc and change `status` to `accepted`; record big technical decisions as ADRs in `docs/adr/` (to create).
+- When a doc decision is made, update the doc and change `status` to `accepted`; record big technical decisions as ADRs in [`docs/decisions/`](decisions/).

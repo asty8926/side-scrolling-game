@@ -105,9 +105,9 @@ The command list *is* the character. Short strings with branch points (`ZZZ` →
 ## What our version must do (acceptance criteria)
 
 **Input layer**
-- [ ] Bindings are stored by **physical key code** (USB HID / scan-code, e.g. `KeyZ`, `KeyX`, `ArrowRight`, `ControlLeft`), not by character. On AZERTY the physical `KeyZ` is labeled **W**, and pressing it performs `Z` with zero configuration.
-- [ ] The UI shows the **localized label** of the bound key (shows "W" on AZERTY, "Z" on QWERTY) using the OS layout. Test: switch macOS input source QWERTY ↔ AZERTY (French) and confirm both labels and behavior.
-- [ ] Bindings live in one config file (e.g. `config/input.(ron|toml|json)`), validated at load, hot-reloadable; invalid file = error message + keep previous bindings (no crash).
+- [ ] Bindings are stored by **physical key code** (Godot `InputEventKey.physical_keycode`, e.g. `KEY_Z`, `KEY_X`, `KEY_RIGHT`, `KEY_CTRL` with left location), not by character. On AZERTY the physical `KeyZ` is labeled **W**, and pressing it performs `Z` with zero configuration.
+- [ ] The UI shows the **localized label** of the bound key (shows "W" on AZERTY, "Z" on QWERTY) using the OS layout (`DisplayServer.keyboard_get_label_from_physical()`). Test: switch macOS input source QWERTY ↔ AZERTY (French) and confirm both labels and behavior.
+- [ ] Default bindings live in the Godot input map (`project.godot`, physical keys). Player overrides (later) live in one `user://` config file, validated at load; invalid file = error message + keep previous bindings (no crash).
 - [ ] Input is sampled every simulation tick (fixed timestep) into a per-player **input frame** (bitset of held buttons + press/release edges). The combat logic only reads input frames (required for replays and netcode, see [roadmap.md](../roadmap.md)).
 - [ ] Double-tap detection for `>>`/`<<` with a configurable window (proposal: 12 ticks at 60 Hz, **our number, not Elsword data**).
 
