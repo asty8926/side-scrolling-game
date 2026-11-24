@@ -35,7 +35,11 @@ func _init(seed_value: int = 1) -> void:
 
 
 ## Adds an entity, gives it the next id and returns that id.
+## Adding the same entity object twice is an error and returns -1.
 func add_entity(entity: SimEntity) -> int:
+	if entities.has(entity):
+		push_error("SimWorld.add_entity: entity %d is already in the world" % entity.id)
+		return -1
 	entity.id = _next_entity_id
 	_next_entity_id += 1
 	entities.append(entity)
@@ -47,6 +51,9 @@ func add_entity(entity: SimEntity) -> int:
 func step(inputs: Array[InputFrame]) -> void:
 	var ordered: Array[InputFrame] = inputs.duplicate()
 	ordered.sort_custom(_input_before)
+	# Tick and frame count first, so moving or dropping a frame changes the digest.
+	input_digest = _fold(input_digest, tick)
+	input_digest = _fold(input_digest, ordered.size())
 	for frame: InputFrame in ordered:
 		input_digest = _fold(input_digest, frame.player)
 		input_digest = _fold(input_digest, frame.buttons)
@@ -132,6 +139,16 @@ func restore(data: PackedByteArray) -> Error:
 		entity.vx = buf.get_64()
 		entity.vy = buf.get_64()
 		new_entities.append(entity)
+
+	var last_id: int = 0
+	for entity: SimEntity in new_entities:
+		if entity.id <= last_id:
+			push_error("SimWorld.restore: entity ids must be positive and increasing (got %d after %d)" % [entity.id, last_id])
+			return ERR_INVALID_DATA
+		last_id = entity.id
+	if new_next_id <= last_id:
+		push_error("SimWorld.restore: next entity id %d is not above the last id %d" % [new_next_id, last_id])
+		return ERR_INVALID_DATA
 
 	var new_rng: SimRng = SimRng.new()
 	if not new_rng.set_state(rng_words):

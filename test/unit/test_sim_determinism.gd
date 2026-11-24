@@ -55,6 +55,33 @@ func test_hash_reacts_to_different_inputs() -> void:
 	assert_ne(a.state_hash(), b.state_hash(), "different inputs give different hashes")
 
 
+func test_hash_sees_empty_frames_and_input_timing() -> void:
+	var none: Array[InputFrame] = []
+	var a: SimWorld = SimWorld.new(1)
+	var b: SimWorld = SimWorld.new(1)
+	a.step(none)
+	b.step([InputFrame.new(0, 0)] as Array[InputFrame])
+	assert_ne(a.state_hash(), b.state_hash(), "an all-zero frame differs from no frame")
+
+	var early: SimWorld = SimWorld.new(1)
+	var late: SimWorld = SimWorld.new(1)
+	early.step([InputFrame.new(0, 4)] as Array[InputFrame])
+	early.step(none)
+	late.step(none)
+	late.step([InputFrame.new(0, 4)] as Array[InputFrame])
+	assert_ne(early.state_hash(), late.state_hash(), "the same input one tick later differs")
+
+
+func test_adding_the_same_entity_twice_is_rejected() -> void:
+	var world: SimWorld = SimWorld.new(1)
+	var entity: SimEntity = SimEntity.new()
+	assert_eq(world.add_entity(entity), 1)
+	assert_eq(world.add_entity(entity), -1)
+	assert_eq(world.entities.size(), 1)
+	assert_eq(entity.id, 1, "id unchanged")
+	assert_push_error_count(1)
+
+
 func test_input_order_within_a_tick_does_not_matter() -> void:
 	var a: SimWorld = SimWorld.new(1)
 	var b: SimWorld = SimWorld.new(1)
@@ -108,8 +135,11 @@ func test_restore_rejects_bad_data_and_keeps_state() -> void:
 	var wrong_magic: PackedByteArray = world.snapshot()
 	wrong_magic[0] = wrong_magic[0] ^ 0xFF
 	assert_eq(world.restore(wrong_magic), ERR_INVALID_DATA, "bad magic")
+	var bad_next_id: PackedByteArray = world.snapshot()
+	bad_next_id.encode_s64(4 + 4 + 8 * 7, 2)  # next id 2 while entity id 2 exists
+	assert_eq(world.restore(bad_next_id), ERR_INVALID_DATA, "next id not above existing ids")
 	assert_eq(world.state_hash(), before, "state untouched after failed restores")
-	assert_push_error_count(3, "each rejected snapshot reports a push_error")
+	assert_push_error_count(4, "each rejected snapshot reports a push_error")
 
 
 func test_rng_same_seed_same_sequence() -> void:
@@ -160,6 +190,16 @@ func test_rng_values_stay_in_range() -> void:
 			out_of_range += 1
 	assert_eq(out_of_range, 0)
 	assert_eq(seen.size(), 7, "every value of [-3, 3] shows up")
+
+
+func test_rng_rejects_ranges_wider_than_2_pow_32() -> void:
+	var rng: SimRng = SimRng.new(3)
+	assert_eq(rng.range_int(0, 9223372036854775807), 0, "huge range returns min with an error")
+	assert_eq(rng.range_int(-9223372036854775807 - 1, 9223372036854775807), -9223372036854775807 - 1)
+	assert_eq(rng.range_int(5, 5), 5, "singleton range")
+	assert_between(rng.range_int(0, SimRng.MASK32), 0, SimRng.MASK32, "exactly 2^32 values still works")
+	assert_false(rng.chance(1, SimRng.MASK32 + 2), "unsupported denominator is never a success")
+	assert_push_error_count(3)
 
 
 func test_rng_huge_seed_works() -> void:

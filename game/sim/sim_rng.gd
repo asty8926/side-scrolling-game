@@ -51,10 +51,13 @@ func range_int(min_value: int, max_value: int) -> int:
 	if max_value < min_value:
 		push_error("SimRng.range_int: max_value (%d) < min_value (%d)" % [max_value, min_value])
 		return min_value
-	var span: int = max_value - min_value + 1
-	if span > MASK32 + 1:
-		push_error("SimRng.range_int: span %d is larger than 2^32" % span)
+	# Width check written so it cannot overflow 64-bit ints: span > 2^32 values
+	# exactly when max - min > MASK32.
+	var too_wide: bool = max_value > min_value + MASK32 if min_value < 0 else max_value - min_value > MASK32
+	if too_wide:
+		push_error("SimRng.range_int: [%d, %d] has more than 2^32 values" % [min_value, max_value])
 		return min_value
+	var span: int = max_value - min_value + 1
 	var limit: int = (MASK32 + 1) - ((MASK32 + 1) % span)
 	var value: int = next_u32()
 	while value >= limit:
@@ -63,9 +66,10 @@ func range_int(min_value: int, max_value: int) -> int:
 
 
 ## True with probability numerator / denominator (integers only, no floats).
+## Supported denominators: 1 to 2^32. Out of range is an error and returns false.
 func chance(numerator: int, denominator: int) -> bool:
-	if denominator <= 0:
-		push_error("SimRng.chance: denominator must be > 0 (got %d)" % denominator)
+	if denominator <= 0 or denominator > MASK32 + 1:
+		push_error("SimRng.chance: denominator must be in [1, 2^32] (got %d)" % denominator)
 		return false
 	return range_int(0, denominator - 1) < numerator
 
