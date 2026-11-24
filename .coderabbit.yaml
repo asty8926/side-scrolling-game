@@ -1,0 +1,14 @@
+# CodeRabbit configuration (https://docs.coderabbit.ai/reference/configuration)
+language: en-US
+reviews:
+  profile: chill
+  # Vendored third-party add-ons (GUT) are pinned and never patched here (ADR 0002).
+  path_filters:
+    - "!addons/**"
+    - "!**/*.uid"
+  auto_review:
+    enabled: true
+    # Review drafts and stacked PRs (base is another feature branch) too.
+    drafts: true
+    base_branches:
+      - ".*"
