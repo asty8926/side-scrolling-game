@@ -134,3 +134,16 @@ func test_trading_kicks_both_land_in_either_fighter_order() -> void:
 		assert_eq(hits, 2, "both hits land (order %d)" % order)
 		assert_eq(a.combo, 1)
 		assert_eq(b.combo, 1)
+
+
+func test_hit_on_the_last_blocked_tick_continues_the_combo() -> void:
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var dummy: SimFighter = world.fighters[1]
+	ranger.move = 0
+	ranger.move_tick = world.characters[0].moveset.moves[0].startup  # z1 active now
+	dummy.hitstun = 1
+	dummy.combo = 1
+	world.step([InputFrame.new(0)] as Array[InputFrame])
+	assert_eq(dummy.combo, 2, "no free tick between the hits")
+	assert_eq(dummy.hitstun, world.characters[0].moveset.moves[0].hitstun_ticks, "new hitstun at full length")

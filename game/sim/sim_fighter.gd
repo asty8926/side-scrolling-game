@@ -59,6 +59,10 @@ var home_x: int = 0
 
 ## Fixed fields in snapshot order (hit_keys follow as a count + values).
 ## Append new fields at the end and bump SimWorld.SNAPSHOT_VERSION.
+## Transient, not in snapshots: whether this tick started in hitstun (set by
+## SimCombat.apply_motion before any hit of the tick, so it is never stale).
+var stunned_this_tick: bool = false
+
 const FIELD_COUNT: int = 21
 ## Most hits one move can record (hitboxes x targets).
 const MAX_HIT_KEYS: int = 256

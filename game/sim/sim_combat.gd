@@ -81,6 +81,7 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	# Hitstun ticks down here, after this tick's attack and movement checks,
 	# so both stay blocked for the same ticks.
+	f.stunned_this_tick = f.hitstun > 0
 	if f.hitstun > 0:
 		f.hitstun -= 1
 	var move: MoveData = current_move(world, f)
@@ -241,7 +242,8 @@ static func advance(f: SimFighter) -> void:
 ## `dir` (the kicker's facing or the arrow's flight). A hit interrupts the
 ## target's own move.
 static func _take_hit(world: SimWorld, dir: int, target: SimFighter, move: MoveData, damage: int) -> void:
-	target.combo = target.combo + 1 if target.hitstun > 0 else 1
+	# A hit on the last blocked tick still continues the combo.
+	target.combo = target.combo + 1 if target.hitstun > 0 or target.stunned_this_tick else 1
 	target.hp = maxi(0, target.hp - damage)
 	target.hitstun = move.hitstun_ticks
 	target.kd += move.kd
