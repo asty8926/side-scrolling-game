@@ -77,7 +77,20 @@ func test_validator_explains_an_active_range_outside_the_move() -> void:
 	move.hitboxes.append(box)
 	var problems: Array[String] = move.validate()
 	assert_eq(problems.size(), 1)
-	assert_string_contains(problems[0], "outside the move")
+	assert_string_contains(problems[0], "outside the move's active phase (5..7)")
+
+
+func test_validator_rejects_hits_before_startup_ends_and_bad_windows() -> void:
+	var move: MoveData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[0].duplicate(true) as MoveData
+	move.startup = 10  # its hitbox still says ticks 5..7
+	assert_string_contains("; ".join(move.validate()), "active phase (10..12)")
+	var window: MoveData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[0].duplicate(true) as MoveData
+	window.cancel_from = -1
+	assert_string_contains("; ".join(window.validate()), "cancel window")
+	var many: MoveData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[0].duplicate(true) as MoveData
+	for i: int in MoveData.MAX_HITBOXES:
+		many.hitboxes.append(many.hitboxes[0])
+	assert_string_contains("; ".join(many.validate()), "at most %d per move" % MoveData.MAX_HITBOXES)
 
 
 func test_ranger_moves_are_valid_and_editable_resources() -> void:

@@ -176,7 +176,11 @@ func step(inputs: Array[InputFrame]) -> void:
 		SimCombat.begin_tick(self, fighter, history)
 		SimMovement.step_fighter(self, fighter, history)
 	for fighter: SimFighter in fighters:
-		SimCombat.resolve(self, fighter)
+		SimCombat.apply_motion(self, fighter)
+	for fighter: SimFighter in fighters:
+		SimCombat.resolve_hits(self, fighter)
+	for fighter: SimFighter in fighters:
+		SimCombat.advance(fighter)
 
 	for entity: SimEntity in entities:
 		entity.x += entity.vx

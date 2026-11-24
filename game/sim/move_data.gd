@@ -11,6 +11,8 @@ extends Resource
 
 ## Which attack button starts this move.
 enum AttackButton { Z, X }
+## Most hitboxes per move, so hit keys (hitboxes x fighters) always fit a snapshot.
+const MAX_HITBOXES: int = SimFighter.MAX_HIT_KEYS / SimWorld.MAX_FIGHTERS
 ## How the move can start when no move is playing.
 enum Start {
 	## Only as the next hit of a string (via another move's cancel_into).
@@ -77,14 +79,16 @@ func validate() -> Array[String]:
 		problems.append("startup and recovery must be >= 0, active >= 1")
 	if hitstun_ticks < 0 or kd < 0 or damage_percent < 0:
 		problems.append("damage_percent, hitstun_ticks and kd must be >= 0")
+	if hitboxes.size() > MAX_HITBOXES:
+		problems.append("%d hitboxes, at most %d per move" % [hitboxes.size(), MAX_HITBOXES])
 	for i: int in hitboxes.size():
 		var box: HitboxData = hitboxes[i]
 		if box == null:
 			problems.append("hitbox %d is empty" % i)
 			continue
-		for problem: String in box.validate(total):
+		for problem: String in box.validate(startup, startup + active - 1):
 			problems.append("hitbox %d: %s" % [i, problem])
-	if not cancel_into.is_empty() and (cancel_from > cancel_to or cancel_to >= total):
+	if not cancel_into.is_empty() and (cancel_from < 0 or cancel_from > cancel_to or cancel_to >= total):
 		problems.append("cancel window %d..%d must be inside the move (0..%d)" % [cancel_from, cancel_to, total - 1])
 	if root_motion.size() > total:
 		problems.append("root_motion has %d entries but the move lasts %d ticks" % [root_motion.size(), total])

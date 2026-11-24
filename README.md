@@ -52,7 +52,7 @@ Double-tap window and input buffer are in `data/input_settings.tres` (open it in
 Everything is a data file you edit in the Inspector (double-click it in the FileSystem dock, change a value, press **Ctrl+S** / **Cmd+S**, then F5 again):
 
 - `data/rooms/test_room.tres`: walls, floor and the **Platforms** list (x position, tier = how many jumps up, width, thickness). Add or move a platform and both what you see and what you can stand on change.
-- `data/characters/ranger_moves.tres`: every attack of the `ZZZZ` and `XXXX` strings. Each move has its frame data (startup, active, recovery ticks), its hitboxes (position, size, which ticks they are active), damage %, hitstun, KD, and which move it cancels into and when. A mistake (for example a hitbox active after the move ends) is reported with a clear message when the game starts.
+- `data/characters/ranger_moves.tres`: every attack of the `ZZZZ` and `XXXX` strings. Each move has its frame data (startup, active, recovery ticks), its hitboxes (position, size, which ticks they are active), damage %, hitstun, KD, and which move it cancels into and when. A mistake (for example a hitbox active outside the move's active ticks) is reported with a clear message when the game starts.
 - `data/characters/ranger.tres` / `dummy.tres`: HP, attack and the hurtbox (where the character can be hit).
 - `data/characters/ranger_movement.tres`: walk and dash speed, jump strength, gravity. Platform tiers follow the jump height, so they stay one jump apart.
 - Camera feel: click the **SideCamera** node in `game/main.tscn` and tune distance, height, dead zone and smoothing in the Inspector.

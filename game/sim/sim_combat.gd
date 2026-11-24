@@ -71,14 +71,22 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 	world.emit_event(&"move_start", f.id, 0, move.id)
 
 
-## Applies the move's root motion and hits every overlapping hurtbox once per
-## box. All fighters are in stable id order; no physics engine is consulted.
-static func resolve(world: SimWorld, f: SimFighter) -> void:
+## Step 1 of a tick's combat, for every fighter before any hit test: the
+## move's root motion for the current move tick.
+static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	var move: MoveData = current_move(world, f)
 	if move == null:
 		return
 	var m: MovementParams = world.movement
 	f.x = clampi(f.x + move.motion_at(f.move_tick) * f.facing, world.room.left + m.half_width, world.room.right - m.half_width)
+
+
+## Step 2: hits every overlapping hurtbox once per box, with every fighter
+## already at its final position for the tick (no fighter-order dependence).
+static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null:
+		return
 	for index: int in move.hitboxes.size():
 		var box: HitboxData = move.hitboxes[index]
 		if f.move_tick < box.from_tick or f.move_tick > box.to_tick:
@@ -92,7 +100,12 @@ static func resolve(world: SimWorld, f: SimFighter) -> void:
 				f.hit_keys.append(key)
 				var attack: int = world.characters[f.character].attack
 				world.emit_hit(f.id, target.id, move, attack * move.damage_percent / 100)
-	f.move_tick += 1
+
+
+## Step 3: the move advances to its next tick.
+static func advance(f: SimFighter) -> void:
+	if f.move != SimFighter.NO_MOVE:
+		f.move_tick += 1
 
 
 ## Integer AABB overlap (touching edges count as touching/hit).
