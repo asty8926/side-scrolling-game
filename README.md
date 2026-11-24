@@ -17,7 +17,16 @@ No coding needed. You only install Godot once.
 1. **Install Godot 4.7.2** (free): download "Godot Engine - macOS" for **4.7.2-stable** from the [official release page](https://github.com/godotengine/godot/releases/tag/4.7.2-stable) (file `Godot_v4.7.2-stable_macos.universal.zip`), unzip it and drag `Godot.app` into Applications. Use exactly this version: newer or older ones may change things.
 2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it).
 3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files.
-4. **Run the project**: press **F5** (or the ▶ Play button, top right). For now a window opens with the text "side-scrolling-game M0" (the simulation already ticks 60 times per second behind it, with nothing in it yet). That's expected: the next issues add your keys, movement, the test room and the character.
+4. **Run the project**: press **F5** (on a Mac keyboard you may need **fn + F5**), or click the ▶ Play button at the top right. A window opens on the **test room**: a floor, wooden platforms stacked exactly one jump apart, and a blue capsule (you) whose yellow nose shows which way it faces. Click inside the window once so it gets the keyboard, then use the keys below. Close the window (or press **F8** in the editor) to stop.
+
+What to try:
+- Walk with ← →; double-tap → (or ←) to dash, keep holding to keep dashing.
+- While dashing, tap the opposite arrow once: you stop and turn around.
+- ↑ jumps up one platform; ↑ again in the air (double jump) reaches two.
+- ↓ while standing on a platform drops through it.
+- The camera follows sideways once you leave the middle of the screen, and stops at the room walls.
+
+![Test room](docs/evidence/42-test-room.png)
 
 ### Keys
 
@@ -32,9 +41,18 @@ Keys are bound by **physical position**, so they work on QWERTY and AZERTY with 
 | Drop through a platform | ↓ | ↓ |
 | Skills 1-4 | A S D C | **Q** S D C |
 | Awakening | Left Ctrl | Left Ctrl |
-| Debug: overlay / reset / record replay | F3 / F4 / F9 | F3 / F4 / F9 |
+| Record a replay (debug) | F9 | F9 |
+| Reserved for the debug overlay / reset (later issue) | F3 / F4 | F3 / F4 |
 
 Double-tap window and input buffer are in `data/input_settings.tres` (open it in Godot's FileSystem dock, edit in the Inspector).
+
+### Change the room or the movement
+
+Everything is a data file you edit in the Inspector (double-click it in the FileSystem dock, change a value, press **Ctrl+S** / **Cmd+S**, then F5 again):
+
+- `data/rooms/test_room.tres`: walls, floor and the **Platforms** list (x position, tier = how many jumps up, width, thickness). Add or move a platform and both what you see and what you can stand on change.
+- `data/characters/ranger_movement.tres`: walk and dash speed, jump strength, gravity. Platform tiers follow the jump height, so they stay one jump apart.
+- Camera feel: click the **SideCamera** node in `game/main.tscn` and tune distance, height, dead zone and smoothing in the Inspector.
 
 ### Run tests
 
