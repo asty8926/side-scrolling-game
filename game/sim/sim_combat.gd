@@ -162,7 +162,8 @@ static func _move(world: SimWorld, projectile: SimProjectile) -> MoveData:
 
 
 ## Hits the first hurtbox the arrow's swept box (from `from_x` to its new x)
-## overlaps: the nearest along its direction, then the lowest fighter id. A fast
+## overlaps: the one it touches first along its direction, then the lowest
+## fighter id (boxes it already overlaps at its start all count as touched first). A fast
 ## arrow therefore never passes through a target between two ticks.
 static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: ProjectileData, from_x: int) -> bool:
 	var sweep_left: int = mini(from_x, projectile.x) - shot.width / 2
@@ -182,7 +183,8 @@ static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: Pr
 		if projectile.y > by + hurt.height or projectile.y + shot.height < by:
 			continue
 		var near_edge: int = hurt_left if projectile.dir == SimFighter.RIGHT else hurt_right
-		var distance: int = (near_edge - from_x) * projectile.dir
+		# Travel until the arrow's front touches it; 0 for every box it already overlaps.
+		var distance: int = maxi(0, (near_edge - from_x) * projectile.dir - shot.width / 2)
 		if best == null or distance < best_distance:
 			best = target
 			best_distance = distance

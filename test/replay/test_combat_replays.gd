@@ -200,3 +200,15 @@ func test_fast_arrow_does_not_pass_through_a_target() -> void:
 	world.characters[0].moveset.moves[4].projectiles[0].speed = 3000
 	var joined: String = "\n".join(_press_x_then_wait(world, 20))
 	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "the swept box still hits the dummy")
+
+
+func test_arrow_overlapping_two_targets_at_spawn_hits_the_lower_id() -> void:
+	var world: SimWorld = _arrow_world(0)
+	var shooter_x: int = world.fighters[0].x
+	world.fighters[1].x = shooter_x + 500  # id 2, hurtbox overlaps the new arrow
+	var third: int = world.add_fighter(SimFighter.NO_PLAYER, world.fighters[1].character)
+	assert_gt(third, 0)
+	world.fighters[2].x = shooter_x + 200  # id 3, also overlaps it, further behind
+	var joined: String = "\n".join(_press_x_then_wait(world, 20))
+	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "both touched at once: the lower id is hit")
+	assert_false(joined.contains(":hit:1:3:"), "one target per arrow")
