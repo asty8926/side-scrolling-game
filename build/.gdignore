@@ -1,0 +1,1 @@
+# Keep Godot from importing local or CI export output (the .app / .zip).

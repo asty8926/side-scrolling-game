@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -65,3 +66,78 @@ jobs:
           name: gut-junit
           path: reports/gut-junit.xml
           if-no-files-found: warn
+
+  export-macos:
+    name: macOS export (unsigned .app)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Godot binary
+        id: cache-godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot
+          key: godot-${{ env.GODOT_VERSION }}-linux-x86_64
+
+      - name: Download Godot ${{ env.GODOT_VERSION }}
+        if: steps.cache-godot.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/godot
+          curl -fsSL -o /tmp/godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          unzip -q /tmp/godot.zip -d ~/godot
+          mv ~/godot/Godot_v${GODOT_VERSION}_linux.x86_64 ~/godot/godot
+          chmod +x ~/godot/godot
+
+      - name: Cache export templates
+        id: cache-templates
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates
+          key: godot-export-templates-${{ env.GODOT_VERSION }}
+
+      - name: Install export templates ${{ env.GODOT_VERSION }}
+        if: steps.cache-templates.outputs.cache-hit != 'true'
+        run: |
+          # Official templates unpack to templates/; Godot looks for 4.7.2.stable.
+          curl -fsSL -o /tmp/templates.tpz \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          rm -rf /tmp/godot-templates
+          mkdir -p /tmp/godot-templates
+          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+          mkdir -p "$HOME/.local/share/godot/export_templates"
+          rm -rf "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          mv /tmp/godot-templates/templates "$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          test -f "$HOME/.local/share/godot/export_templates/4.7.2.stable/macos.zip"
+
+      - name: Import project
+        run: ~/godot/godot --headless --path . --import
+
+      - name: Export macOS release zip
+        run: |
+          mkdir -p build
+          ~/godot/godot --headless --path . --export-release "macOS" build/side-scrolling-game.zip
+          test -f build/side-scrolling-game.zip || { echo "export wrote no zip"; exit 1; }
+          mkdir -p build/macos
+          unzip -q -o build/side-scrolling-game.zip -d build/macos
+          APP="build/macos/side-scrolling-game.app"
+          test -d "$APP" || { echo "zip does not contain side-scrolling-game.app"; ls -la build/macos; exit 1; }
+          BIN="$APP/Contents/MacOS"
+          test -d "$BIN" || { echo "app is missing Contents/MacOS"; find "$APP" -maxdepth 3; exit 1; }
+          chmod +x "$BIN"/*
+          test -x "$BIN"/* || { echo "app executable is not executable"; ls -la "$BIN"; exit 1; }
+          echo "exported:"
+          find "$APP" -maxdepth 3 -printf '%p\n' | head -40
+          ls -lh build/side-scrolling-game.zip "$APP"
+
+      - name: Upload macOS .app
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: build/macos/side-scrolling-game.app
+          if-no-files-found: error
+          retention-days: 14
+

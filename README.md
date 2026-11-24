@@ -8,14 +8,31 @@ Custom tribute to Elsword: an open-source, **Elsword-inspired 2.5D action brawle
 - **Platforms:** macOS first, Windows later. Free and open-source tools only.
 - **Controls:** keyboard, Elsword-style (Z/X + arrows + skill keys). Works out of the box on **QWERTY and AZERTY** (keys are bound by physical position).
 
-> Status: **M0 (vertical slice) in progress.** The Godot project and its test setup exist; there is no gameplay yet. Track progress in [epic #35](https://github.com/asty8926/side-scrolling-game/issues/35).
+> Status: **M0 (vertical slice) in progress.** The test room is playable (walk, jump, kicks, arrows, `>>WX` slash-through). Track progress in [epic #35](https://github.com/asty8926/side-scrolling-game/issues/35).
 
 ## How to try it (macOS)
+
+### Play the Mac app (no Godot)
+
+Every green CI run on `main` builds an unsigned Mac app you can download:
+
+1. Open this repo on GitHub, go to the **Actions** tab, and click the **CI** workflow.
+2. Open the latest **green** run on the `main` branch (or a run you started with **Run workflow**).
+3. At the bottom, under **Artifacts**, download **macos-app**. That download is a zip.
+4. Unzip it: you should see `side-scrolling-game.app`. Drag it to **Applications** or keep it in a folder you choose (avoid leaving it in **Downloads** if macOS acts oddly, which can happen while the file is still quarantined).
+5. **First launch only** (the app is ad-hoc signed, not notarized, so Gatekeeper warns once):
+   - Right-click (or Control-click) `side-scrolling-game.app` and choose **Open**, then click **Open** in the dialog. Enter your password if asked.
+   - If macOS still blocks it: open **System Settings > Privacy & Security**, scroll to the message about `side-scrolling-game`, and click **Open Anyway**.
+6. Click once inside the window so it gets the keyboard, then use the keys below.
+
+You do not need Godot for this. Later builds replace the previous artifact; download again after a new merge.
+
+### Or open the project in Godot (to edit data)
 
 No coding needed. You only install Godot once.
 
 1. **Install Godot 4.7.2** (free): download "Godot Engine - macOS" for **4.7.2-stable** from the [official release page](https://github.com/godotengine/godot/releases/tag/4.7.2-stable) (file `Godot_v4.7.2-stable_macos.universal.zip`), unzip it and drag `Godot.app` into Applications. Use exactly this version: newer or older ones may change things.
-2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it).
+2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it, then `git pull` for updates).
 3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files.
 4. **Run the project**: press **F5** (on a Mac keyboard you may need **fn + F5**), or click the ▶ Play button at the top right. A window opens on the **test room**: a floor, wooden platforms stacked exactly one jump apart, and a blue capsule (you) whose yellow nose shows which way it faces. Click inside the window once so it gets the keyboard, then use the keys below. Close the window (or press **F8** in the editor) to stop.
 
@@ -108,7 +125,7 @@ Renderer: **Forward+** (Godot's default desktop renderer, the best fit for 3D on
 - **Data as Godot Resources (`.tres`)**: moves, hitboxes, enemies, rooms, shops, dialogue. Editable in the inspector (with custom inspector panels where it helps) and as plain text by agents. Move data hot-reloads while the game runs.
 - **Free add-ons only where they save real work**: GUT for tests, Dialogue Manager for dialogue (M3). See [ADR 0002](docs/decisions/0002-addons-and-tooling.md).
 - **Later:** a dedicated headless Godot server for online co-op, [Nakama](https://heroiclabs.com/nakama/) for accounts/parties/matchmaking, and Rust via [godot-rust/gdext](https://github.com/godot-rust/gdext) only for a measured hot spot.
-- **Builds:** macOS first (unsigned: right-click > Open or "Open Anyway" once in Privacy & Security), Windows later.
+- **Builds:** macOS first. CI on `main` uploads an unsigned (ad-hoc signed, not notarized) `.app` artifact; right-click > Open or "Open Anyway" once in Privacy & Security. Windows later.
 - AI-generated 3D models and animations (glTF), with Blender scripting available. Premade assets are placeholders only.
 
 ## Docs

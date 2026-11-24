@@ -32,7 +32,7 @@ supersedes: "the Rust + Bevy proposal in README, AGENTS.md and roadmap (pre-ADR 
 4. **Combat is our own fixed-tick deterministic simulation** (60 ticks/s, integer fixed-point state, input frames per tick), driven from `_physics_process` but independent of Godot's physics engine. 3D nodes only display the sim's state.
 5. **Rust stays available via [godot-rust/gdext](https://github.com/godot-rust/gdext)** (v0.5.6 on 2026-11-24) for a future hot spot only, after a measurement proves GDScript is too slow. No Rust before that.
 6. **Online (M5, later):** a **dedicated headless Godot server** running the same GDScript simulation (server-authoritative + client prediction; netcode ADR before M5). **[Nakama](https://heroiclabs.com/nakama/)** (open source, self-hostable, official [Godot 4 client](https://github.com/heroiclabs/nakama-godot)) later for accounts, parties and matchmaking only, not for combat.
-7. **Distribution:** macOS first, as an **unsigned** export (players right-click > Open, or System Settings > Privacy & Security > "Open Anyway", once). Windows export later. No paid Apple Developer Program.
+7. **Distribution:** macOS first, as an **unsigned** (ad-hoc signed, not notarized) export. CI on `main` (and manual dispatch) uploads the `.app` as a GitHub Actions artifact. Players right-click > Open, or System Settings > Privacy & Security > "Open Anyway", once. Windows export later. No paid Apple Developer Program.
 
 ## Consequences
 
