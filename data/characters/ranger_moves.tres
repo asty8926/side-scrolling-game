@@ -1,0 +1,226 @@
+[gd_resource type="Resource" script_class="MoveSet" load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://game/sim/move_data.gd" id="1_move"]
+[ext_resource type="Script" path="res://game/sim/hitbox_data.gd" id="2_hit"]
+[ext_resource type="Script" path="res://game/sim/move_set.gd" id="3_set"]
+
+[sub_resource type="Resource" id="hit_1"]
+script = ExtResource("2_hit")
+offset_x = 550
+offset_y = 300
+width = 700
+height = 700
+from_tick = 5
+to_tick = 7
+
+[sub_resource type="Resource" id="hit_2"]
+script = ExtResource("2_hit")
+offset_x = 550
+offset_y = 300
+width = 700
+height = 700
+from_tick = 5
+to_tick = 7
+
+[sub_resource type="Resource" id="hit_3"]
+script = ExtResource("2_hit")
+offset_x = 600
+offset_y = 300
+width = 750
+height = 700
+from_tick = 6
+to_tick = 8
+
+[sub_resource type="Resource" id="hit_4"]
+script = ExtResource("2_hit")
+offset_x = 650
+offset_y = 200
+width = 800
+height = 800
+from_tick = 8
+to_tick = 11
+
+[sub_resource type="Resource" id="hit_5"]
+script = ExtResource("2_hit")
+offset_x = 2000
+offset_y = 800
+width = 3000
+height = 300
+from_tick = 6
+to_tick = 7
+
+[sub_resource type="Resource" id="hit_6"]
+script = ExtResource("2_hit")
+offset_x = 2000
+offset_y = 800
+width = 3000
+height = 300
+from_tick = 6
+to_tick = 7
+
+[sub_resource type="Resource" id="hit_7"]
+script = ExtResource("2_hit")
+offset_x = 2000
+offset_y = 900
+width = 3000
+height = 300
+from_tick = 8
+to_tick = 9
+
+[sub_resource type="Resource" id="hit_8"]
+script = ExtResource("2_hit")
+offset_x = 2000
+offset_y = 700
+width = 3000
+height = 300
+from_tick = 14
+to_tick = 15
+
+[sub_resource type="Resource" id="hit_9"]
+script = ExtResource("2_hit")
+offset_x = 2200
+offset_y = 800
+width = 3400
+height = 300
+from_tick = 8
+to_tick = 10
+
+[sub_resource type="Resource" id="move_0"]
+script = ExtResource("1_move")
+id = &"ranger_z1"
+button = 0
+start = 1
+startup = 5
+active = 3
+recovery = 14
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_1")])
+damage_percent = 163
+hitstun_ticks = 30
+kd = 15
+cancel_into = Array[StringName]([&"ranger_z2"])
+cancel_from = 8
+cancel_to = 19
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_1"]
+script = ExtResource("1_move")
+id = &"ranger_z2"
+button = 0
+start = 0
+startup = 5
+active = 3
+recovery = 15
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_2")])
+damage_percent = 201
+hitstun_ticks = 30
+kd = 15
+cancel_into = Array[StringName]([&"ranger_z3"])
+cancel_from = 8
+cancel_to = 20
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_2"]
+script = ExtResource("1_move")
+id = &"ranger_z3"
+button = 0
+start = 0
+startup = 6
+active = 3
+recovery = 16
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_3")])
+damage_percent = 249
+hitstun_ticks = 30
+kd = 20
+cancel_into = Array[StringName]([&"ranger_z4"])
+cancel_from = 9
+cancel_to = 22
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_3"]
+script = ExtResource("1_move")
+id = &"ranger_z4"
+button = 0
+start = 0
+startup = 8
+active = 4
+recovery = 24
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_4")])
+damage_percent = 339
+hitstun_ticks = 45
+kd = 40
+cancel_into = Array[StringName]([])
+cancel_from = 0
+cancel_to = 0
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_4"]
+script = ExtResource("1_move")
+id = &"ranger_x1"
+button = 1
+start = 1
+startup = 6
+active = 2
+recovery = 16
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_5")])
+damage_percent = 261
+hitstun_ticks = 30
+kd = 10
+cancel_into = Array[StringName]([&"ranger_x2"])
+cancel_from = 8
+cancel_to = 21
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_5"]
+script = ExtResource("1_move")
+id = &"ranger_x2"
+button = 1
+start = 0
+startup = 6
+active = 2
+recovery = 16
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_6")])
+damage_percent = 295
+hitstun_ticks = 30
+kd = 10
+cancel_into = Array[StringName]([&"ranger_x3"])
+cancel_from = 8
+cancel_to = 21
+root_motion = PackedInt32Array()
+
+[sub_resource type="Resource" id="move_6"]
+script = ExtResource("1_move")
+id = &"ranger_x3"
+button = 1
+start = 0
+startup = 8
+active = 8
+recovery = 16
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_7"), SubResource("hit_8")])
+damage_percent = 165
+hitstun_ticks = 30
+kd = 10
+cancel_into = Array[StringName]([&"ranger_x4"])
+cancel_from = 16
+cancel_to = 29
+root_motion = PackedInt32Array(-40, -40, -40, -40, -40, -40, -40, -40)
+
+[sub_resource type="Resource" id="move_7"]
+script = ExtResource("1_move")
+id = &"ranger_x4"
+button = 1
+start = 0
+startup = 8
+active = 3
+recovery = 24
+hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_9")])
+damage_percent = 468
+hitstun_ticks = 45
+kd = 40
+cancel_into = Array[StringName]([])
+cancel_from = 0
+cancel_to = 0
+root_motion = PackedInt32Array()
+
+[resource]
+script = ExtResource("3_set")
+moves = Array[ExtResource("1_move")]([SubResource("move_0"), SubResource("move_1"), SubResource("move_2"), SubResource("move_3"), SubResource("move_4"), SubResource("move_5"), SubResource("move_6"), SubResource("move_7")])
