@@ -17,8 +17,9 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var m: MovementParams = world.movement
 	var room: RoomLayout = world.room
 	var window: int = world.input_settings.double_tap_window_ticks
-	var held: int = history.held_now()
-	var pressed: int = history.pressed_ago(0)
+	var attacking: bool = f.is_in_move()
+	var held: int = 0 if attacking else history.held_now()
+	var pressed: int = 0 if attacking else history.pressed_ago(0)
 	var dir: int = 0
 	if (held & InputFrame.RIGHT) != 0:
 		dir += 1
@@ -33,7 +34,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		reverse_press = (pressed & against) != 0
 	# An opposite press during a dash is always the reverse (below), even when it
 	# also completes a double tap.
-	if not reverse_press:
+	if not reverse_press and not attacking:
 		if history.double_tap(InputFrame.RIGHT, window):
 			started = SimFighter.RIGHT
 		elif history.double_tap(InputFrame.LEFT, window):
@@ -71,12 +72,12 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		f.vy = 0
 		f.air_jumps = 1
 		world.emit_event(&"drop", f.id)
-	elif f.is_grounded() and history.buffered_press(InputFrame.UP, world.input_settings.buffer_ticks):
+	elif not attacking and f.is_grounded() and history.buffered_press(InputFrame.UP, world.input_settings.buffer_ticks):
 		f.ground = SimFighter.IN_AIR
 		f.vy = m.jump_velocity
 		f.air_jumps = 1
 		world.emit_event(&"jump", f.id)
-	elif not f.is_grounded() and f.air_jumps > 0 and history.buffered_press(InputFrame.UP, 0):
+	elif not attacking and not f.is_grounded() and f.air_jumps > 0 and history.buffered_press(InputFrame.UP, 0):
 		f.vy = m.double_jump_velocity
 		f.air_jumps -= 1
 		world.emit_event(&"double_jump", f.id)
