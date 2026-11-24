@@ -55,6 +55,7 @@ Everything is a data file you edit in the Inspector (double-click it in the File
 - `data/characters/ranger_moves.tres`: every attack of the `ZZZZ` and `XXXX` strings. Each move has its frame data (startup, active, recovery ticks), its kick hitboxes (position, size, which ticks they are active) or its arrows (**Projectiles**: spawn tick, spawn offset, speed in sub-units per tick, lifetime, size), damage %, hitstun, KD, and which move it cancels into and when. A mistake (for example a hitbox active outside the move's active ticks) is reported with a clear message when the game starts.
 - `data/characters/ranger.tres` / `dummy.tres`: HP, attack and the hurtbox (where the character can be hit).
 - `data/characters/ranger_movement.tres`: walk and dash speed, jump strength, gravity. Platform tiers follow the jump height, so they stay one jump apart.
+- **Live tuning (no restart):** while the game runs (F5), change a value in one of these files and save (Cmd+S). Within half a second the game uses it: the next kick hits with the new damage, hitstun or hitbox, and arrows (even one already flying) use the new speed. A green message confirms it. A broken value (for example `active = -3`) shows a red message listing the problem, and the game keeps the previous values. Edit the file again to fix it. (Live reload is for debug runs only. A replay recorded while you edit data won't play back the same.)
 - Camera feel: click the **SideCamera** node in `game/main.tscn` and tune distance, height, dead zone and smoothing in the Inspector.
 
 ### Run tests
