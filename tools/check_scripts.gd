@@ -13,10 +13,10 @@ const SKIP_DIRS: Array[String] = ["res://addons", "res://.godot"]
 
 func _init() -> void:
 	var files: Array[String] = []
-	_collect_scripts("res://", files)
+	var failures: Array[String] = []
+	_collect_scripts("res://", files, failures)
 	files.sort()
 
-	var failures: Array[String] = []
 	for path: String in files:
 		var problem: String = _check_script(path)
 		if problem != "":
@@ -28,16 +28,18 @@ func _init() -> void:
 	quit(1 if failures.size() > 0 else 0)
 
 
-func _collect_scripts(dir_path: String, out: Array[String]) -> void:
+## Fills `out` with every .gd path; a folder that cannot be read is a failure
+## (otherwise its scripts would silently go unchecked).
+func _collect_scripts(dir_path: String, out: Array[String], failures: Array[String]) -> void:
 	for skip: String in SKIP_DIRS:
 		if dir_path.trim_suffix("/") == skip:
 			return
 	var dir: DirAccess = DirAccess.open(dir_path)
 	if dir == null:
-		push_error("check_scripts: cannot open %s (%s)" % [dir_path, error_string(DirAccess.get_open_error())])
+		failures.append("%s: cannot open folder (%s)" % [dir_path, error_string(DirAccess.get_open_error())])
 		return
 	for sub: String in dir.get_directories():
-		_collect_scripts(dir_path.path_join(sub), out)
+		_collect_scripts(dir_path.path_join(sub), out, failures)
 	for file: String in dir.get_files():
 		if file.get_extension() == "gd":
 			out.append(dir_path.path_join(file))
