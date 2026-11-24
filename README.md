@@ -67,7 +67,7 @@ If a change to the game rules is intentional, the replay test fails with the exp
 | `game/input/` | Keyboard to per-tick input frames (`InputSampler`), key labels for your layout (`KeyLabel`). |
 | `game/replay/` | Replays: the `Replay` file format, `ReplayRunner` (runs one headless), `SimSetup` (named ways to build a world). |
 | `game/debug/` | Debug tools: replay recorder (F9), later overlays and readouts. |
-| `data/` | Game data as text Resources (`.tres`): moves, hitboxes, enemies, rooms... editable in Godot's Inspector. |
+| `data/` | Game data as text Resources (`.tres`), editable in Godot's Inspector: `input_settings.tres` (double tap, buffer), `characters/ranger_movement.tres` (walk/dash speed, jump, gravity), `rooms/test_room.tres` (walls, floor, platforms by tier). |
 | `test/unit/`, `test/replay/` | GUT tests: unit tests and input-replay tests, run headless in CI. |
 | `tools/` | CI helper scripts (`check_scripts.gd` fails the build on any script error). |
 | `addons/` | Vendored third-party add-ons only ([GUT 9.7.1](https://github.com/bitwes/Gut/releases/tag/v9.7.1)). Excluded from our strict warnings. |
