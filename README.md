@@ -43,6 +43,8 @@ Keys are bound by **physical position**, so they work on QWERTY and AZERTY with 
 | Skills 1-4 | A S D C | **Q** S D C |
 | Awakening | Left Ctrl | Left Ctrl |
 | Record a replay (debug); a red **REC** shows top right while recording | F9 | F9 (Mac: **fn + F9**) |
+| Debug overlay: frame data, hit/hurt/push boxes, inputs (debug) | F1 | F1 (Mac: **fn + F1**) |
+| Pause / step one tick (debug) | F2 / F3 | F2 / F3 (Mac: **fn + F2 / fn + F3**) |
 | Reset the training dummy (debug) | F4 | F4 (Mac: **fn + F4**) |
 
 Double-tap window and input buffer are in `data/input_settings.tres` (open it in Godot's FileSystem dock, edit in the Inspector).

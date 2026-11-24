@@ -66,3 +66,10 @@ func test_sampler_does_not_lose_a_subtick_press_release() -> void:
 func test_key_label_has_headless_fallback() -> void:
 	assert_ne(KeyLabel.for_action(&"attack_z"), "?")
 	assert_eq(KeyLabel.for_action(&"missing_action"), "?")
+
+
+func test_debug_keys_f1_to_f4() -> void:
+	var expected: Dictionary[StringName, Key] = {&"debug_overlay": KEY_F1, &"debug_pause": KEY_F2, &"debug_step": KEY_F3, &"debug_reset": KEY_F4}
+	for action: StringName in expected:
+		var key: InputEventKey = InputMap.action_get_events(action)[0] as InputEventKey
+		assert_eq(key.physical_keycode, expected[action], "%s physical key" % action)
