@@ -21,8 +21,9 @@ func right() -> int:
 	return x + width / 2
 
 
-func top(tier_height: int) -> int:
-	return tier * tier_height
+## Y of the walkable top: `tier` tiers above the room floor at `floor_y`.
+func top(floor_y: int, tier_height: int) -> int:
+	return floor_y + tier * tier_height
 
 
 func validate() -> Array[String]:

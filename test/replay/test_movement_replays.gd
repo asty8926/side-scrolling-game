@@ -155,3 +155,9 @@ func test_movement_params_change_behaviour() -> void:
 	for i: int in 10:
 		other.step([InputFrame.new(0, R, R if i == 0 else 0)] as Array[InputFrame])
 	assert_eq(other.fighters[0].x, 1000, "10 ticks at walk_speed 100")
+
+
+func test_platform_top_is_measured_from_the_room_floor() -> void:
+	var platform: RoomPlatform = RoomPlatform.new()
+	platform.tier = 2
+	assert_eq(platform.top(1000, 2150), 5300, "tier 2 sits two tiers above a floor at y=1000")

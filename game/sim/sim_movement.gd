@@ -104,7 +104,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 			var tier_height: int = world.tier_height
 			for i: int in room.platforms.size():
 				var platform: RoomPlatform = room.platforms[i]
-				var top: int = platform.top(tier_height)
+				var top: int = platform.top(room.floor_y, tier_height)
 				var overlaps: bool = f.x + m.half_width >= platform.left() and f.x - m.half_width <= platform.right()
 				if overlaps and old_y >= top and new_y <= top and (landed_on == SimFighter.IN_AIR or top > landed_y):
 					landed_on = i

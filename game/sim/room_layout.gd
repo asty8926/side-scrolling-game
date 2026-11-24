@@ -40,6 +40,6 @@ func validate(movement: MovementParams) -> Array[String]:
 			continue
 		for problem: String in platform.validate():
 			problems.append("platform %d: %s" % [i, problem])
-		if platform.left() < left or platform.right() > right or platform.top(tier_height(movement)) > top:
+		if platform.left() < left or platform.right() > right or platform.top(floor_y, tier_height(movement)) > top:
 			problems.append("platform %d is outside the room" % i)
 	return problems
