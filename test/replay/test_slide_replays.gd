@@ -140,6 +140,71 @@ func test_slash_from_further_away_still_ends_on_the_far_side() -> void:
 		assert_eq(ranger.facing, 1 if dummy.x > ranger.x else -1)
 
 
+func test_slash_late_hit_still_ends_on_the_far_side() -> void:
+	# The slide misses a dummy at 2200; the slash first reaches it on a late
+	# active tick. Later pass ticks have no root motion, so completing the
+	# pass must still run there, and the ranger must finish beyond the dummy.
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var dummy: SimFighter = world.fighters[1]
+	ranger.x = 0
+	ranger.facing = SimFighter.RIGHT
+	ranger.dash_dir = SimFighter.RIGHT
+	dummy.x = 2200
+	dummy.home_x = dummy.x
+	var previous: int = 0
+	for tick: int in 80:
+		var held: int = 0
+		if tick == 0:
+			held = Z
+		elif tick == 11:
+			held = X
+		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+	assert_eq(dummy.combo, 1, "the slide misses and only the slash lands")
+	assert_gt(ranger.x, dummy.x, "a late slash hit still ends on the far side")
+	if dummy.x != ranger.x:
+		assert_eq(ranger.facing, 1 if dummy.x > ranger.x else -1)
+
+
+func test_early_cancel_after_a_late_slash_still_ends_on_the_far_side() -> void:
+	# Same late hit, then Z at the first slash cancel tick. The pass must
+	# finish (clamped at walls and edges) before ZZZ starts, so the ranger
+	# is already on the far side and the next Z faces the dummy.
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var dummy: SimFighter = world.fighters[1]
+	ranger.x = 0
+	ranger.facing = SimFighter.RIGHT
+	ranger.dash_dir = SimFighter.RIGHT
+	dummy.x = 2200
+	dummy.home_x = dummy.x
+	var previous: int = 0
+	var start_ids: PackedStringArray = PackedStringArray()
+	var canceled: bool = false
+	for tick: int in 80:
+		var held: int = 0
+		if tick == 0:
+			held = Z
+		elif tick == 11:
+			held = X
+		elif not canceled:
+			var move: MoveData = SimCombat.current_move(world, ranger)
+			if move != null and move.id == &"ranger_dash_zx" and ranger.move_tick >= move.cancel_from:
+				held = Z
+				canceled = true
+		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
+		previous = held
+		for event: SimEvent in world.events:
+			if event.type == &"move_start":
+				start_ids.append(str(event.move_id))
+	assert_eq(start_ids, PackedStringArray(["ranger_dash_z", "ranger_dash_zx", "ranger_z1"]))
+	assert_eq(dummy.combo, 2, "slash then the canceled-into Z both land")
+	assert_gt(ranger.x, dummy.x, "an early cancel still finishes the pass first")
+	if dummy.x != ranger.x:
+		assert_eq(ranger.facing, 1 if dummy.x > ranger.x else -1, "faces the dummy after the early cancel")
+
+
 func test_root_motion_stops_at_a_platform_edge() -> void:
 	var world: SimWorld = SimSetup.create(&"test_room", 1)
 	var platform: RoomPlatform = world.room.platforms[1]  # center1, right edge 1250

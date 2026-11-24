@@ -41,6 +41,9 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 		return
 	var move: MoveData = current_move(world, f)
 	if move != null and f.move_tick >= move.length():
+		# A late hit can leave a gap after the last root-motion tick; finish
+		# the pass (clamped at walls and edges) before turning or recovering.
+		_finish_pass(world, f)
 		if move.turn_at_end:
 			_face_hit_targets(world, f)
 		f.move = SimFighter.NO_MOVE
@@ -53,7 +56,10 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 			for next_id: StringName in move.cancel_into:
 				var next: int = moveset.index_of(next_id)
 				if next >= 0 and history.buffered_press(_button(moveset.moves[next]), world.input_settings.buffer_ticks):
-					# Same turn as a natural end, so a cancel into ZZZ still faces the target.
+					# Finish a short pass before the cancel (an early Z must
+					# not leave the ranger on the near side). Then face the
+					# target so the next Z still points at them.
+					_finish_pass(world, f)
 					if move.turn_at_end:
 						_face_hit_targets(world, f)
 					_start(world, f, next)
@@ -94,20 +100,21 @@ static func apply_motion(world: SimWorld, f: SimFighter) -> void:
 	var move: MoveData = current_move(world, f)
 	if move == null:
 		return
-	var m: MovementParams = world.movement
 	var motion: int = move.motion_at(f.move_tick) * f.facing
-	if motion == 0:
-		return
-	var low: int = world.room.left + m.half_width
-	var high: int = world.room.right - m.half_width
-	if f.ground >= 0:
-		# Stop at the platform edge (M0 choice, docs/systems/04 open question 3).
-		var platform: RoomPlatform = world.room.platforms[f.ground]
-		low = maxi(low, mini(f.x, platform.left()))
-		high = mini(high, maxi(f.x, platform.right()))
-	var before: int = f.x
-	f.x = clampi(f.x + motion, low, high)
-	_carry(world, f, f.x - before)
+	# Root motion can be 0 on later pass ticks (the slash's array ends
+	# before pass_to); still close any remaining gap to the far side.
+	if motion != 0:
+		var m: MovementParams = world.movement
+		var low: int = world.room.left + m.half_width
+		var high: int = world.room.right - m.half_width
+		if f.ground >= 0:
+			# Stop at the platform edge (M0 choice, docs/systems/04 open question 3).
+			var platform: RoomPlatform = world.room.platforms[f.ground]
+			low = maxi(low, mini(f.x, platform.left()))
+			high = mini(high, maxi(f.x, platform.right()))
+		var before: int = f.x
+		f.x = clampi(f.x + motion, low, high)
+		_carry(world, f, f.x - before)
 	_complete_pass(world, f)
 
 
@@ -162,8 +169,32 @@ static func _complete_pass(world: SimWorld, f: SimFighter) -> void:
 	if move == null or not move.passes_at(f.move_tick):
 		return
 	var target: SimFighter = _first_hit_target(world, f)
-	if target == null or world.room == null or world.movement == null:
+	if target == null:
 		return
+	var far: int = _far_side_x(world, f, target)
+	var remaining: int = move.pass_to - f.move_tick + 1
+	if remaining < 1:
+		return
+	_step_toward(f, far, remaining)
+
+
+## Snap to the far side in one step (still clamped at walls and edges). Used
+## when the move ends or cancels, so a late hit or an early cancel cannot
+## leave the ranger short of a completed pass.
+static func _finish_pass(world: SimWorld, f: SimFighter) -> void:
+	var move: MoveData = current_move(world, f)
+	if move == null or move.pass_from < 0:
+		return
+	var target: SimFighter = _first_hit_target(world, f)
+	if target == null:
+		return
+	_step_toward(f, _far_side_x(world, f, target), 1)
+
+
+## Far-side x next to `target`, clamped at room walls and at the platform edge.
+static func _far_side_x(world: SimWorld, f: SimFighter, target: SimFighter) -> int:
+	if world.room == null or world.movement == null:
+		return f.x
 	var m: MovementParams = world.movement
 	var low: int = world.room.left + m.half_width
 	var high: int = world.room.right - m.half_width
@@ -171,8 +202,10 @@ static func _complete_pass(world: SimWorld, f: SimFighter) -> void:
 		var platform: RoomPlatform = world.room.platforms[f.ground]
 		low = maxi(low, mini(f.x, platform.left()))
 		high = mini(high, maxi(f.x, platform.right()))
-	var far: int = clampi(target.x + f.facing * (2 * m.half_width), low, high)
-	var remaining: int = move.pass_to - f.move_tick + 1
+	return clampi(target.x + f.facing * (2 * m.half_width), low, high)
+
+
+static func _step_toward(f: SimFighter, far: int, remaining: int) -> void:
 	if remaining < 1:
 		return
 	if f.facing > 0 and f.x < far:
