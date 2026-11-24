@@ -104,5 +104,23 @@ func test_frees_debug_boxes_attached_to_world_root() -> void:
 	assert_true(is_instance_valid(lines))
 	assert_eq(lines.get_parent(), root)
 	overlay.free()
+	await get_tree().process_frame
 	assert_false(is_instance_valid(lines), "DebugBoxes under world_root must be freed with the overlay")
+	assert_eq(root.find_child("DebugBoxes", true, false), null)
+
+
+func test_frees_debug_boxes_that_share_the_overlay_parent() -> void:
+	# Same layout as main.tscn: the overlay and DebugBoxes are both children of Main.
+	var root: Node3D = Node3D.new()
+	add_child_autofree(root)
+	var overlay: DebugOverlay = DebugOverlay.new()
+	overlay.world_root = root
+	root.add_child(overlay)
+	await get_tree().process_frame
+	var lines: MeshInstance3D = overlay._lines
+	assert_true(is_instance_valid(lines))
+	assert_eq(lines.get_parent(), root)
+	overlay.free()
+	await get_tree().process_frame
+	assert_false(is_instance_valid(lines), "a sibling DebugBoxes must still be released")
 	assert_eq(root.find_child("DebugBoxes", true, false), null)

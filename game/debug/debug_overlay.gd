@@ -55,12 +55,14 @@ func _attach_lines() -> void:
 
 func _exit_tree() -> void:
 	# _lines lives under world_root, or is unparented in tests, so it is not
-	# freed with this CanvasLayer. Release it in both cases.
+	# freed with this CanvasLayer. A parented mesh may share that parent with
+	# this overlay (main.tscn: both under Main); remove_child is blocked while
+	# a sibling exits, so queue_free it and only free() when it has no parent.
 	if _lines != null and is_instance_valid(_lines):
-		var parent: Node = _lines.get_parent()
-		if parent != null:
-			parent.remove_child(_lines)
-		_lines.free()
+		if _lines.get_parent() != null:
+			_lines.queue_free()
+		else:
+			_lines.free()
 	_lines = null
 
 
