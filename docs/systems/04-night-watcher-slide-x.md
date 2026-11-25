@@ -62,7 +62,8 @@ It is a movement + attack in one: you close distance, hit, and **swap sides** wi
 1. Name in our game for the blade and the move (can't ship "Erendil").
 2. After passing through, does the character auto-turn to face the enemy (Elsword "slice the enemy's back" suggests she ends behind, facing away, then the player turns)? Needs reference video. **M0 choice:** auto-turn (`turn_at_end` on `ranger_dash_zx`) so `WWW` continues the combo immediately; revisit in M1 with a reference video.
 3. Platform edges: stop at the edge, or allow sliding off? Elsword lets characters fall off platforms with dashes; decide by feel. **M0 choice:** stop at the platform edge (and at walls). Sliding off is M1 feel work.
-4. Can `>>ZX` be dash-canceled at the end into `ZZZ<<>`? Proposal: yes, cancel window after the slash's active frames.
+4. **Distances (settled in #61):** the `>>Z` slide keeps the dash speed and slows down (~1.9 CW in open space). `>>ZX` drags the target, dashes ~3.8 CW and ends ~1.9 CW past it (`pass_overshoot`). Reference and tests: [../reference/rena-combo-movement.md](../reference/rena-combo-movement.md).
+5. Can `>>ZX` be dash-canceled at the end into `ZZZ<<>`? Proposal: yes, cancel window after the slash's active frames.
 
 ## Sources
 

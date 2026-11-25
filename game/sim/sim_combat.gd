@@ -202,7 +202,9 @@ static func _far_side_x(world: SimWorld, f: SimFighter, target: SimFighter) -> i
 		var platform: RoomPlatform = world.room.platforms[f.ground]
 		low = maxi(low, mini(f.x, platform.left()))
 		high = mini(high, maxi(f.x, platform.right()))
-	return clampi(target.x + f.facing * (2 * m.half_width), low, high)
+	var move: MoveData = current_move(world, f)
+	var overshoot: int = move.pass_overshoot if move != null else 0
+	return clampi(target.x + f.facing * (2 * m.half_width + overshoot), low, high)
 
 
 static func _step_toward(f: SimFighter, far: int, remaining: int) -> void:

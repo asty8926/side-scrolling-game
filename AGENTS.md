@@ -17,6 +17,7 @@ This repo is built entirely by AI coding agents (Grok Bot, Cursor agents, someti
 | `ZZZ<<>` loop, dash cancel, combo cycles | `docs/systems/03-combo-loops-and-cancels.md` |
 | `>>ZX` slide kick + slash-through | `docs/systems/04-night-watcher-slide-x.md` |
 | Hit-stop, hitstun, buffer, cancel windows | `docs/systems/05-game-feel.md` |
+| How far a move moves the character (feel check) | `docs/reference/README.md` |
 | Awakening (beads, Ctrl) | `docs/systems/06-awakening.md` |
 | Nature's Force class resource | `docs/systems/07-natures-force.md` |
 | MP gain/spend (no MP potions) | `docs/systems/08-mp-economy.md` |

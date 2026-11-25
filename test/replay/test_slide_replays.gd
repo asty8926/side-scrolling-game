@@ -141,7 +141,7 @@ func test_slash_from_further_away_still_ends_on_the_far_side() -> void:
 
 
 func test_slash_late_hit_still_ends_on_the_far_side() -> void:
-	# The slide misses a dummy at 2200; the slash first reaches it on a late
+	# The slide misses a dummy at 3200 (beyond the slide's reach); the slash first reaches it on a late
 	# active tick. Later pass ticks have no root motion, so completing the
 	# pass must still run there, and the ranger must finish beyond the dummy.
 	var world: SimWorld = SimSetup.create(&"training", 1)
@@ -150,7 +150,7 @@ func test_slash_late_hit_still_ends_on_the_far_side() -> void:
 	ranger.x = 0
 	ranger.facing = SimFighter.RIGHT
 	ranger.dash_dir = SimFighter.RIGHT
-	dummy.x = 2200
+	dummy.x = 3200
 	dummy.home_x = dummy.x
 	var previous: int = 0
 	for tick: int in 80:
@@ -177,7 +177,7 @@ func test_early_cancel_after_a_late_slash_still_ends_on_the_far_side() -> void:
 	ranger.x = 0
 	ranger.facing = SimFighter.RIGHT
 	ranger.dash_dir = SimFighter.RIGHT
-	dummy.x = 2200
+	dummy.x = 3200
 	dummy.home_x = dummy.x
 	var previous: int = 0
 	var start_ids: PackedStringArray = PackedStringArray()

@@ -61,7 +61,8 @@ enum Start {
 
 @export_group("Motion")
 ## Forward sub-units moved on each move tick (index = move tick, missing = 0;
-## negative = backward). Root motion stops at walls and at platform edges
+## negative = backward, e.g. arrow recoil). Per-hit distances are listed in
+## docs/reference/rena-combo-movement.md (1 character width = 600 sub). Root motion stops at walls and at platform edges
 ## (M0 choice for docs/systems/04 open question 3). # proposal, tune
 @export var root_motion: PackedInt32Array = PackedInt32Array()
 ## First move tick with the pushbox off, so the fighter passes through other
@@ -69,6 +70,9 @@ enum Start {
 @export_range(-1, 300, 1, "suffix:tick") var pass_from: int = -1
 ## Last move tick with the pushbox off (inclusive). # proposal, tune
 @export_range(-1, 300, 1, "suffix:tick") var pass_to: int = -1
+## Extra sub-units past the target's far side that a pass-through ends at
+## (0 = right behind them). docs/reference/rena-combo-movement.md. # proposal, tune
+@export_range(0, 3000, 10, "suffix:sub") var pass_overshoot: int = 0
 ## Turn around when the move ends (face the target you passed). # proposal, tune
 @export var turn_at_end: bool = false
 ## Last move tick on which a fighter already hit by this move is carried
@@ -130,6 +134,8 @@ func validate() -> Array[String]:
 		problems.append("cancel window %d..%d must be inside the move (0..%d)" % [cancel_from, cancel_to, total - 1])
 	if pass_from >= 0 and (pass_from > pass_to or pass_to >= total):
 		problems.append("pass window %d..%d must be inside the move (0..%d)" % [pass_from, pass_to, total - 1])
+	if pass_overshoot < 0:
+		problems.append("pass_overshoot must be >= 0")
 	if carry_to >= 0 and carry_to >= total:
 		problems.append("carry_to %d must be inside the move (0..%d)" % [carry_to, total - 1])
 	if root_motion.size() > total:
