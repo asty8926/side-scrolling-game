@@ -28,7 +28,7 @@ ElWiki describes direction and kind of motion, never distances or frames.
 
 ## Per-hit movement: reference vs ours
 
-Displacement is per chain step, measured in open space: the ranger's x on the step's first tick minus her x on the next step's first tick. Positive means forward (facing).
+Displacement is per chain step, measured in open space: her x on the next step's first tick minus her x on this step's first tick, multiplied by her facing (+1 right, -1 left). Positive means forward.
 
 | Step | Reference | Tag | Ours (sub) | Ours (CW) | Over ticks | Test range (CW) |
 |---|---|---|---|---|---|---|
