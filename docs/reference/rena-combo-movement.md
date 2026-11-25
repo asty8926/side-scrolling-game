@@ -40,7 +40,7 @@ Displacement is per chain step, measured in open space: her x on the next step's
 | `X` 2nd arrow | small push back | [obs] | -150 | -0.25 | 2-7 | -0.4..-0.15 |
 | `X` 3rd (backflip, 2 arrows) | backflip | [doc] for the backflip, distance [ours] | -900 | -1.50 | 0-14 | -1.8..-1.2 |
 | `X` 4th arrow | push back | [obs] | -300 | -0.50 | 9-16 | -0.7..-0.35 |
-| `>>Z` slide kick | real slide, keeps dash speed then slows | [doc] for "slide", ~2 CW [est] | +1140 (150→40 per tick) | +1.90 | 0-11 | 1.5..2.5 |
+| `>>Z` slide kick | real slide, keeps dash speed then slows | [doc] for "slide", distance [ours] (unverified: no clean footage) | +1140 (150→40 per tick) | +1.90 | 0-11 | 1.5..2.5 |
 | `>>ZX` dash-through | travels past the target and drags it along; the 2019 rework "dashes farther behind the enemy" | [doc] for direction and drag, distance [est] | +1820 root motion, ends 450 past the far side | ≈ +3.8 travelled | 0-13 | travel 3.0..4.5, ends 1.5..2.2 CW past the target (center to center) |
 
 Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2259 sub (3.8 CW). It drags the dummy 535 sub and ends 1124 sub (1.9 CW) past it, close enough for `ZZZ` to keep the combo going. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
@@ -62,4 +62,5 @@ How the footage was measured: phase correlation of the background strip between 
 
 - No frame data or distances for base Rena commands on ElWiki. Every distance above is [obs], [est] or [ours].
 - No clean, single-command footage of base Rena `XXXX` recoil. The per-arrow recoil of `X` 2 and 4 comes from Asty's memory [obs]; only the 3rd-input backflip is documented.
+- A clean `>>Z` slide on its own. In the Twilight `dzx` section (0:45.37-0:45.47) X follows Z after only 6 frames, so the slide cannot be separated from the dash-through. The ~1.9 CW slide is our choice until a `>>ZZ` clip is measured.
 - Night Watcher's exact `>>ZX` distance. The Twilight clip shows the same command line, but on a later job.
