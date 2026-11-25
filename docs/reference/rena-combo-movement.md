@@ -43,7 +43,7 @@ Displacement is per chain step, measured in open space: the ranger's x on the st
 | `>>Z` slide kick | real slide, keeps dash speed then slows | [doc] for "slide", ~2 CW [est] | +1140 (150→40 per tick) | +1.90 | 0-11 | 1.5..2.5 |
 | `>>ZX` dash-through | travels past the target and drags it along; the 2019 rework "dashes farther behind the enemy" | [doc] for direction and drag, distance [est] | +1820 root motion, ends 450 past the far side | ≈ +3.8 travelled | 0-13 | travel 3.0..4.5, ends 1.5..2.2 CW past the target (center to center) |
 
-Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2259 sub (3.8 CW). It drags the dummy 535 sub and ends 1124 sub (1.9 CW) past it, close enough for `ZZZ` to keep the combo going. Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2259 sub (3.8 CW). It drags the dummy 535 sub and ends 1124 sub (1.9 CW) past it, close enough for `ZZZ` to keep the combo going. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
 
 ## Footage
 
