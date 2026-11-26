@@ -25,21 +25,25 @@ func test_zzzz_mashed_hits_four_times_at_expected_ticks() -> void:
 	var result: ReplayRunner.Result = _run(tapped(&"training", 120, _mash(Z, 6, 30)))
 	var hits: PackedStringArray = events_of(result, "hit")
 	assert_eq(hits.size(), 4, "exactly 4 hits: %s" % [hits])
+	# Each landed hit adds 2 ticks of hit-stop, so later hits land later than
+	# the raw cancel windows (5, 13, 22, 33 without hit-stop).
 	var expected: PackedStringArray = PackedStringArray([
 		"5:hit:1:2:ranger_z1:damage=163:kd=15",
-		"13:hit:1:2:ranger_z2:damage=201:kd=15",
-		"22:hit:1:2:ranger_z3:damage=249:kd=20",
-		"33:hit:1:2:ranger_z4:damage=339:kd=40",
+		"15:hit:1:2:ranger_z2:damage=201:kd=15",
+		"26:hit:1:2:ranger_z3:damage=249:kd=20",
+		"39:hit:1:2:ranger_z4:damage=339:kd=40",
 	])
 	assert_eq(hits, expected, "early presses are buffered into each cancel window")
 
 
 func test_late_third_press_ends_the_string_after_two() -> void:
-	# z1 at 0, z2 starts at 8 (press at 6), z2's window closes at tick 28 and it
-	# ends at 31: a press at 29 is too late and does not restart the string.
-	var result: ReplayRunner.Result = _run(tapped(&"training", 90, {0: Z, 6: Z, 29: Z}))
+	# z1 at 0, z2 starts at 10 (press at 6, plus 2 ticks of hit-stop after z1
+	# lands). z2's cancel window then closes around tick 32, and z2 itself
+	# ends at 35; a press at 34 is still in recovery, too late for z3, and
+	# too early to start a new string.
+	var result: ReplayRunner.Result = _run(tapped(&"training", 90, {0: Z, 6: Z, 34: Z}))
 	var starts: PackedStringArray = events_of(result, "move_start")
-	assert_eq(starts, PackedStringArray(["0:move_start:1:0:ranger_z1", "8:move_start:1:0:ranger_z2"]))
+	assert_eq(starts, PackedStringArray(["0:move_start:1:0:ranger_z1", "10:move_start:1:0:ranger_z2"]))
 	assert_eq(events_of(result, "hit").size(), 2)
 
 
@@ -248,4 +252,6 @@ func test_mashing_x_cannot_start_the_next_arrow_before_cancel_from() -> void:
 		for event: SimEvent in world.events:
 			if event.type == &"move_start" and event.move_id == &"ranger_x2":
 				x2_tick = event.tick
-	assert_eq(x2_tick, 16, "x2 starts at x1.cancel_from, not earlier, even when X is mashed")
+	# cancel_from is 16; a hit also adds 2 ticks of hit-stop, so x2 starts at 18
+	# against the dummy. It must still not start before 16.
+	assert_eq(x2_tick, 18, "x2 starts at x1.cancel_from plus hit-stop, not earlier, even when X is mashed")

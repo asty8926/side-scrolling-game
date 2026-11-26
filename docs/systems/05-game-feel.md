@@ -39,9 +39,9 @@ He picked these three from the options: "Hit-stop and impact, Fast, responsive i
 All numbers below are **our starting proposals** (60 Hz simulation), to be tuned by playtest, not Elsword data.
 
 **Hit-stop**
-- [ ] On hit, attacker and target freeze for `hitstop_ticks` (per move, data; proposal 3-6 ticks for kicks, 6-10 for finishers). Freeze is part of the deterministic simulation (counts as ticks, not wall-clock sleeps).
-- [ ] During hit-stop, inputs are still read and buffered.
-- [ ] Target shakes (visual offset only) during hit-stop; camera shake on heavy hits (data, can be disabled in options).
+- [x] On hit, attacker and target pause for `hitstop_ticks` (per move, data; default **2 ticks** [ours]). This is a very short tick-based impact pause, not a long freeze. A long freeze in some Night Watcher footage is the Ice Eldrit weapon proc, which we do not copy. The pause is part of the deterministic simulation (counts as ticks, not `Engine.time_scale`).
+- [x] During hit-stop, inputs are still read and buffered.
+- [ ] Target shakes (visual offset only) during hit-stop. Camera shake on heavy hits is already in (`CameraParams.shake_amplitude`, view only; set to 0 to disable).
 - [ ] Special skills: global time-stop + cut-in style flash (`skill_freeze_ticks`, proposal ~0.3 s like post-2021 Awakening) - can be disabled in options.
 
 **Impact**

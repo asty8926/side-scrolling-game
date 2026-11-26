@@ -56,6 +56,8 @@ A cycle therefore looks like: ground loop (`ZZZ<<>` x N) → launcher → air st
 
 This loop is the **#1 feel test** for the whole project. If it doesn't feel crisp, M1 is not done.
 
+The facing twitch itself is in: during late Z1-Z3 recovery, a back press cancels the move and faces away with no step; a forward press (the `>` of `<<>`) snaps back to the original facing and idle, so the next Z is Z1. Scripted and keyboard-path tests cover one `ZZZ<<>Z` cycle. The KD-cap, knockdown, and x5-loop checks below stay open for M1.
+
 ## What our version must do (acceptance criteria)
 
 - [ ] On a training dummy (KD visible in debug), the inputs `ZZZ<<>` repeated 5 times keep the dummy in hitstun the whole time **without** a knockdown, as long as the KD cap is not reached.

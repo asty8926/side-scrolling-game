@@ -13,7 +13,7 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 7
+const SNAPSHOT_VERSION: int = 8
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
 ## Most fighters (players + dummies/mobs) a world and its snapshot hold.
@@ -263,6 +263,19 @@ func step(inputs: Array[InputFrame]) -> void:
 
 	var empty_history: InputHistory = InputHistory.new()
 	empty_history.push(InputFrame.new())
+	# Hit-stop is a short global tick pause (default 2 ticks, not a long freeze):
+	# inputs are already recorded above, so a press during the pause is buffered.
+	var frozen: bool = false
+	for fighter: SimFighter in fighters:
+		if fighter.hitstop > 0:
+			frozen = true
+			break
+	if frozen:
+		for fighter: SimFighter in fighters:
+			if fighter.hitstop > 0:
+				fighter.hitstop -= 1
+		tick += 1
+		return
 	for fighter: SimFighter in fighters:
 		var history: InputHistory = histories[fighter.player] if fighter.player >= 0 and fighter.player < histories.size() else empty_history
 		SimCombat.begin_tick(self, fighter, history)
@@ -303,6 +316,7 @@ func emit_hit(actor: int, target: int, move: MoveData, damage: int) -> void:
 	var event: SimEvent = SimEvent.new(tick, &"hit", actor, target, move.id)
 	event.damage = damage
 	event.kd = move.kd
+	event.camera_shake = move.camera_shake
 	events.append(event)
 
 

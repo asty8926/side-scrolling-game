@@ -15,6 +15,8 @@ var move_id: StringName = &""
 ## Resolved integer damage and KD added (hit events only).
 var damage: int = 0
 var kd: int = 0
+## View-only: this hit should pulse the side camera. Not in to_text/replays.
+var camera_shake: bool = false
 
 
 func _init(event_tick: int = 0, event_type: StringName = &"", actor_id: int = 0, target_id: int = 0, move: StringName = &"") -> void:

@@ -50,6 +50,13 @@ enum Start {
 @export_range(0, 200, 1) var kd: int = 10
 ## Sub-units the target is pushed away per hit. # proposal, tune
 @export_range(0, 2000, 10, "suffix:sub") var pushback: int = 60
+## Ticks both attacker and target pause after a hit (tick-based, not
+## Engine.time_scale). Very short on purpose: 2 ticks [ours]. A longer
+## freeze seen in some Rena footage is the Ice Eldrit weapon proc, not
+## a default mechanic. 0 disables. # proposal, tune
+@export_range(0, 30, 1, "suffix:ticks") var hitstop_ticks: int = 2
+## Brief view-only camera shake when this move hits. # ours
+@export var camera_shake: bool = false
 
 @export_group("String")
 ## Moves this one can cancel into (next nodes of the string).
@@ -58,6 +65,9 @@ enum Start {
 @export_range(0, 300, 1, "suffix:tick") var cancel_from: int = 8
 ## Last move tick of the cancel window (inclusive). # proposal, tune
 @export_range(0, 300, 1, "suffix:tick") var cancel_to: int = 20
+## First move tick a back-then-forward input (`<<>`) can cancel this move
+## into a facing twitch (used by `ZZZ<<>`). -1 = never. # proposal, tune
+@export_range(-1, 300, 1, "suffix:tick") var dir_cancel_from: int = -1
 
 @export_group("Motion")
 ## Forward sub-units moved on each move tick (index = move tick, missing = 0;
@@ -110,8 +120,8 @@ func validate() -> Array[String]:
 		problems.append("id is empty")
 	if active < 1 or startup < 0 or recovery < 0:
 		problems.append("startup and recovery must be >= 0, active >= 1")
-	if hitstun_ticks < 0 or kd < 0 or damage_percent < 0 or pushback < 0:
-		problems.append("damage_percent, hitstun_ticks, kd and pushback must be >= 0")
+	if hitstun_ticks < 0 or kd < 0 or damage_percent < 0 or pushback < 0 or hitstop_ticks < 0:
+		problems.append("damage_percent, hitstun_ticks, kd, pushback and hitstop_ticks must be >= 0")
 	if hitboxes.size() > MAX_HITBOXES:
 		problems.append("%d hitboxes, at most %d per move" % [hitboxes.size(), MAX_HITBOXES])
 	for i: int in hitboxes.size():
@@ -138,6 +148,8 @@ func validate() -> Array[String]:
 		problems.append("pass_overshoot must be >= 0")
 	if carry_to >= 0 and carry_to >= total:
 		problems.append("carry_to %d must be inside the move (0..%d)" % [carry_to, total - 1])
+	if dir_cancel_from >= 0 and dir_cancel_from >= total:
+		problems.append("dir_cancel_from %d must be inside the move (0..%d)" % [dir_cancel_from, total - 1])
 	if root_motion.size() > total:
 		problems.append("root_motion has %d entries but the move lasts %d ticks" % [root_motion.size(), total])
 	return problems

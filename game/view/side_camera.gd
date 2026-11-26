@@ -8,16 +8,22 @@ extends Camera3D
 @export var target: Node3D
 ## The tunables. If empty, defaults are used (tests can assign a new one).
 @export var params: CameraParams
+## Optional. When set, a heavy-hit sim event pulses a short view-only shake.
+@export var driver: SimDriver
 
 var _focus_x: float = 0.0
 var _initialized: bool = false
 var _has_focus: bool = false
+var _shake: float = 0.0
+var _shake_phase: float = 0.0
 
 
 func _ready() -> void:
 	# After the fighter view interpolates, so the camera uses this frame's target.
 	process_priority = 10
 	apply_params()
+	if driver != null:
+		driver.ticked.connect(_on_sim_ticked)
 
 
 ## Applies framing from `params` (also called after a hot reload).
@@ -36,6 +42,13 @@ func _process(delta: float) -> void:
 		global_position = desired
 		_initialized = true
 		return
+	if _shake > 0.0:
+		_shake_phase += delta * 90.0
+		desired.x += _shake * sin(_shake_phase)
+		desired.y += _shake * 0.45 * cos(_shake_phase * 1.3)
+		_shake *= exp(-params.shake_decay * delta)
+		if _shake < 0.001:
+			_shake = 0.0
 	global_position = Vector3(
 		_smooth(global_position.x, desired.x, params.horizontal_smoothing, delta),
 		_smooth(global_position.y, desired.y, params.vertical_smoothing, delta),
@@ -77,6 +90,18 @@ func visible_half_width(vertical_offset: float = -1.0) -> float:
 	var half_fov: float = tan(deg_to_rad(params.fov) * 0.5) * depth
 	# KEEP_HEIGHT: fov is vertical; KEEP_WIDTH: fov is horizontal.
 	return half_fov * aspect if keep_aspect == KEEP_HEIGHT else half_fov
+
+
+func _on_sim_ticked(_tick: int) -> void:
+	if driver == null or driver.world == null:
+		return
+	_ensure_params()
+	if params.shake_amplitude <= 0.0:
+		return
+	for event: SimEvent in driver.world.events:
+		if event.type == &"hit" and event.camera_shake:
+			_shake = params.shake_amplitude
+			return
 
 
 func _ensure_params() -> void:

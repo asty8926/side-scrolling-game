@@ -17,7 +17,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var m: MovementParams = world.movement
 	var room: RoomLayout = world.room
 	var window: int = world.input_settings.double_tap_window_ticks
-	var attacking: bool = f.is_in_move() or f.is_in_hitstun()
+	var attacking: bool = f.is_in_move() or f.is_in_hitstun() or f.dir_cancel_facing != 0
 	var held: int = 0 if attacking else history.held_now()
 	var pressed: int = 0 if attacking else history.pressed_ago(0)
 	var dir: int = 0
@@ -57,7 +57,10 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 			world.emit_event(&"dash_stop", f.id)
 
 	# Horizontal speed.
-	if reversed:
+	if f.dir_cancel_facing != 0:
+		# `<<>` twitch: face-turn only, no step (footage).
+		f.vx = 0
+	elif reversed:
 		f.vx = 0
 	elif f.dash_dir != 0:
 		f.vx = f.dash_dir * m.dash_speed

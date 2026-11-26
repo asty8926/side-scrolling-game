@@ -5,6 +5,9 @@ extends RefCounted
 
 ## Display phase of a move. Move state itself is its index + tick on SimFighter.
 enum Phase { IDLE, STARTUP, ACTIVE, RECOVERY }
+## Short buffer for the `<<>` facing twitch, so a slightly early back or
+## forward press still counts without eating a run input from 8 ticks ago.
+const DIR_CANCEL_BUFFER: int = 3
 
 
 static func current_move(world: SimWorld, f: SimFighter) -> MoveData:
@@ -65,7 +68,18 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 						_face_hit_targets(world, f)
 					_start(world, f, next)
 					return
+		if _try_dir_cancel(world, f, history, move):
+			return
 		return
+	if f.dir_cancel_facing != 0:
+		_try_dir_cancel_return(world, f, history)
+		# A Z on the same tick as `>` (or instead of it) still starts Z1
+		# facing the original forward; otherwise stay locked in the twitch.
+		# dir_cancel_facing is cleared in advance() after movement, so a
+		# just-completed snap still has facing == dir_cancel_facing.
+		if f.dir_cancel_facing != 0 and f.facing != f.dir_cancel_facing:
+			f.idle_ticks = 0
+			return
 	var buffer: int = mini(world.input_settings.buffer_ticks, f.idle_ticks)
 	f.idle_ticks = mini(f.idle_ticks + 1, InputHistory.CAPACITY)
 	if not f.is_grounded():
@@ -99,6 +113,7 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 	f.hit_keys.clear()
 	f.dash_dir = 0
 	f.dash_attack_ticks = 0
+	f.dir_cancel_facing = 0
 	f.vx = 0
 	var move: MoveData = current_move(world, f)
 	world.emit_event(&"move_start", f.id, 0, move.id)
@@ -233,9 +248,13 @@ static func _step_toward(f: SimFighter, far: int, remaining: int) -> void:
 		f.x = maxi(f.x - step, far)
 
 
-## Step 1b: fighters' pushboxes push each other apart (pairs in fighter order),
-## except while one of them passes through (MoveData pass window). Walls win:
-## a fighter pinned to a wall leaves the whole push to the other one.
+## Step 1b: body collision. Walking or running into a monster stops the
+## player and does not move the monster (footage: the dummy stays put).
+## During an attack, leftover root motion that would overlap the target
+## instead drives it forward so a slide kick is not eaten by the body box.
+## Pass windows still skip the pair (the `>>ZX` slash-through). Two players
+## still split the overlap; two monsters leave it alone. Walls clamp only
+## the body that is allowed to move.
 static func separate(world: SimWorld) -> void:
 	if world.room == null or world.movement == null:
 		return
@@ -250,22 +269,57 @@ static func separate(world: SimWorld) -> void:
 				continue
 			if absi(a.y - b.y) >= m.height:
 				continue
-			var gap: int = 2 * m.half_width - absi(a.x - b.x)
-			if gap <= 0:
+			if 2 * m.half_width - absi(a.x - b.x) <= 0:
 				continue
-			# The one further left (lower id on a tie) goes left.
-			var left: SimFighter = a if a.x < b.x or (a.x == b.x and a.id < b.id) else b
-			var right: SimFighter = b if left == a else a
-			var left_x: int = clampi(left.x - gap / 2, low, high)
-			var right_x: int = clampi(right.x + (gap - gap / 2), low, high)
-			# Whatever one could not move (wall), the other takes.
-			if right_x - left_x < 2 * m.half_width:
-				if left_x == low:
-					right_x = mini(left_x + 2 * m.half_width, high)
-				else:
-					left_x = maxi(right_x - 2 * m.half_width, low)
-			left.x = left_x
-			right.x = right_x
+			var a_attack: bool = a.is_in_move()
+			var b_attack: bool = b.is_in_move()
+			if a_attack and not b_attack:
+				_drive_from_overlap(a, b, low, high, m)
+			elif b_attack and not a_attack:
+				_drive_from_overlap(b, a, low, high, m)
+			elif not a_attack and not b_attack:
+				_resolve_bodies(a, b, low, high, m)
+
+
+## Snap the attacker to the near-side contact of `other` and move `other`
+## by the overshoot, so a slide travels its full distance with the target.
+static func _drive_from_overlap(attacker: SimFighter, other: SimFighter, low: int, high: int, m: MovementParams) -> void:
+	var contact: int = other.x - attacker.facing * 2 * m.half_width
+	var overshoot: int = (attacker.x - contact) * attacker.facing
+	if overshoot <= 0:
+		return
+	other.x = clampi(other.x + attacker.facing * overshoot, low, high)
+	attacker.x = clampi(other.x - attacker.facing * 2 * m.half_width, low, high)
+
+
+## Idle bodies: the player is blocked by a monster; the monster is not
+## displaced. Two players split the overlap (a leftover wall is taken by
+## the one who can still move).
+static func _resolve_bodies(a: SimFighter, b: SimFighter, low: int, high: int, m: MovementParams) -> void:
+	var a_mobile: bool = a.player >= 0
+	var b_mobile: bool = b.player >= 0
+	if a_mobile and b_mobile:
+		var gap: int = 2 * m.half_width - absi(a.x - b.x)
+		var left: SimFighter = a if a.x < b.x or (a.x == b.x and a.id < b.id) else b
+		var right: SimFighter = b if left == a else a
+		var left_x: int = clampi(left.x - gap / 2, low, high)
+		var right_x: int = clampi(right.x + (gap - gap / 2), low, high)
+		if right_x - left_x < 2 * m.half_width:
+			if left_x == low:
+				right_x = mini(left_x + 2 * m.half_width, high)
+			else:
+				left_x = maxi(right_x - 2 * m.half_width, low)
+		left.x = left_x
+		right.x = right_x
+		return
+	if not a_mobile and not b_mobile:
+		return
+	var player: SimFighter = a if a_mobile else b
+	var obstacle: SimFighter = b if a_mobile else a
+	if player.x < obstacle.x or (player.x == obstacle.x and player.id < obstacle.id):
+		player.x = clampi(obstacle.x - 2 * m.half_width, low, high)
+	else:
+		player.x = clampi(obstacle.x + 2 * m.half_width, low, high)
 
 
 ## Whether `f`'s pushbox is off this tick (passing through fighters).
@@ -276,6 +330,7 @@ static func is_passing(world: SimWorld, f: SimFighter) -> bool:
 
 ## A melee contact found in resolve_hits, applied in apply_hits.
 class PendingHit:
+	var attacker: SimFighter
 	var dir: int
 	var target: SimFighter
 	var move: MoveData
@@ -304,6 +359,7 @@ static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 				var attack: int = world.characters[f.character].attack
 				var damage: int = attack * move.damage_percent / 100
 				var hit: PendingHit = PendingHit.new()
+				hit.attacker = f
 				hit.dir = f.facing
 				hit.target = target
 				hit.move = move
@@ -316,6 +372,7 @@ static func resolve_hits(world: SimWorld, f: SimFighter) -> void:
 static func apply_hits(world: SimWorld) -> void:
 	for hit: PendingHit in world.pending_hits:
 		_take_hit(world, hit.dir, hit.target, hit.move, hit.damage)
+		_apply_hitstop(hit.attacker, hit.target, hit.move)
 	world.pending_hits.clear()
 
 
@@ -412,6 +469,12 @@ static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: Pr
 	var damage: int = attack * move.damage_percent / 100
 	_take_hit(world, projectile.dir, best, move, damage)
 	world.emit_hit(projectile.owner, best.id, move, damage)
+	var attacker: SimFighter = null
+	for fighter: SimFighter in world.fighters:
+		if fighter.id == projectile.owner:
+			attacker = fighter
+			break
+	_apply_hitstop(attacker, best, move)
 	return true
 
 
@@ -419,6 +482,9 @@ static func _projectile_hit(world: SimWorld, projectile: SimProjectile, shot: Pr
 static func advance(f: SimFighter) -> void:
 	if f.move != SimFighter.NO_MOVE:
 		f.move_tick += 1
+	elif f.dir_cancel_facing != 0 and f.facing == f.dir_cancel_facing:
+		# Keep the no-step lock through this tick's movement, then release.
+		f.dir_cancel_facing = 0
 
 
 ## Target response (#45): damage, hitstun, KD, combo count, pushback along
@@ -436,8 +502,53 @@ static func _take_hit(world: SimWorld, dir: int, target: SimFighter, move: MoveD
 	target.hit_keys.clear()
 	target.dash_dir = 0
 	target.dash_attack_ticks = 0
+	target.dir_cancel_facing = 0
 	var m: MovementParams = world.movement
 	target.x = clampi(target.x + move.pushback * dir, world.room.left + m.half_width, world.room.right - m.half_width)
+
+
+## Pause attacker and target for `move.hitstop_ticks` (the next world steps
+## skip motion while any fighter still has hitstop left).
+static func _apply_hitstop(attacker: SimFighter, target: SimFighter, move: MoveData) -> void:
+	if move.hitstop_ticks <= 0:
+		return
+	if attacker != null:
+		attacker.hitstop = maxi(attacker.hitstop, move.hitstop_ticks)
+	if target != null:
+		target.hitstop = maxi(target.hitstop, move.hitstop_ticks)
+
+
+## `<<` of `ZZZ<<>`: end the move, face away, no step. The original facing is
+## stored so `>` can snap back and reset the string.
+static func _try_dir_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData) -> bool:
+	if move.dir_cancel_from < 0 or f.move_tick < move.dir_cancel_from:
+		return false
+	var back: int = InputFrame.LEFT if f.facing == SimFighter.RIGHT else InputFrame.RIGHT
+	if not history.buffered_press(back, DIR_CANCEL_BUFFER):
+		return false
+	_finish_pass(world, f)
+	if move.turn_at_end:
+		_face_hit_targets(world, f)
+	f.dir_cancel_facing = f.facing
+	f.facing = -f.facing
+	f.move = SimFighter.NO_MOVE
+	f.move_tick = 0
+	f.idle_ticks = 0
+	f.hit_keys.clear()
+	f.dash_dir = 0
+	f.dash_attack_ticks = 0
+	f.vx = 0
+	world.emit_event(&"dir_cancel", f.id)
+	return true
+
+
+## `>` of `ZZZ<<>`: snap back to the original forward facing, stay idle.
+static func _try_dir_cancel_return(world: SimWorld, f: SimFighter, history: InputHistory) -> void:
+	var forward: int = InputFrame.RIGHT if f.dir_cancel_facing == SimFighter.RIGHT else InputFrame.LEFT
+	if history.buffered_press(forward, DIR_CANCEL_BUFFER) or history.buffered_press(InputFrame.Z, DIR_CANCEL_BUFFER) or history.buffered_press(InputFrame.X, DIR_CANCEL_BUFFER):
+		f.facing = f.dir_cancel_facing
+		f.vx = 0
+		world.emit_event(&"dir_cancel_return", f.id)
 
 
 ## Integer AABB overlap (touching edges count as touching/hit).
