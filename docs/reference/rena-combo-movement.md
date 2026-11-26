@@ -52,13 +52,13 @@ ElWiki describes the string ("Fires 2 arrows, followed by a backflip and shootin
 
 | Thing | Previous | Ours | Notes |
 |---|---|---|---|
-| Arrow speed (`X` 1–3) | 400 sub/tick | 400 sub/tick (unchanged) | 6.67 m/s |
+| Arrow speed (`X` 1–3) | 400 sub/tick | 400 sub/tick (unchanged) | 24 m/s (400 sub/tick at 60 ticks/s) |
 | Lifetime (`X` 1–3) | 30 ticks (12.0 m of flight, 20 CW) | **17 ticks (6.8 m of flight, 11.3 CW)** | Spawns 0.4 m in front of the ranger and disappears 7.2 m from her, just inside a visible half-screen (~7.5 m at the default camera). |
 | Final shot (`X` 4) | 500 sub/tick × 30 (15.0 m of flight) | **500 × 14 ticks (7.0 m of flight, 11.7 CW)** | Disappears 7.4 m from the ranger. Same idea, slightly snappier shot. |
 | `X` 1 and 2 `cancel_from` | 8 ticks | **16 ticks** | The arrow fires at tick 6; the next press cannot start until 16, so a mash cannot go faster than the animation. Buffer still delivers a press that arrived a little early. |
 | `X` 3 `cancel_from` (backflip, two arrows) | 16 | **22** | After the second arrow (spawn tick 14) plus a short follow-through. |
 
-A press faster than `cancel_from` is held in the 8-tick input buffer and fires at the first legal tick; it does not start the next arrow early.
+Only a press in the 8-tick buffer before `cancel_from` is kept, and then it starts at the first legal tick. An earlier press expires; it does not start the next arrow early, and it is not held until the cancel window opens.
 
 ## Command timing for `>>Z`
 
