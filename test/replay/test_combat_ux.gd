@@ -86,8 +86,10 @@ func test_x_can_cancel_the_slide_as_soon_as_it_connects() -> void:
 		if _current_id(world) == &"ranger_dash_zx":
 			# The press is at the first active tick (~6); after the short
 			# hit-stop it should still become the slash, not wait for the
-			# slide to end.
+			# slide to end. The slide hit must already have landed (cancel
+			# opens on tick 7, after resolve_hits on tick 6).
 			assert_true(i <= 12, "hit-cancelled by tick %d, not at the end of the slide" % i)
+			assert_gte(world.fighters[1].combo, 1, "the slide still hits before the cancel")
 			return
 	fail_test(">>ZX never started (saw the slide: %s)" % saw_slide)
 
@@ -164,3 +166,21 @@ func test_hit_stop_freezes_attacker_and_target_then_resumes() -> void:
 	assert_eq(frozen, 2, "both stay paused for 2 ticks")
 	assert_eq(ranger.hitstop, 0)
 	assert_gt(dummy.hitstun, 0, "hitstun resumes after the freeze")
+
+
+func test_recoil_into_a_dummy_behind_does_not_fling_it_forward() -> void:
+	# A backward step (x2 recoil) into a dummy behind must push it further
+	# back, not teleport it in front of the ranger.
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var dummy: SimFighter = world.fighters[1]
+	ranger.x = 0
+	ranger.facing = SimFighter.RIGHT
+	dummy.x = -600
+	dummy.home_x = dummy.x
+	ranger.move = world.characters[0].moveset.index_of(&"ranger_x2")
+	ranger.move_tick = 2  # first recoil tick of x2 (root motion -25)
+	world.step([InputFrame.new(0, 0, 0, 0)] as Array[InputFrame])
+	assert_lt(dummy.x, -600, "the dummy is pushed further back, got %d" % dummy.x)
+	assert_lt(ranger.x, dummy.x + world.movement.half_width * 2 + 1)
+	assert_gt(ranger.x, dummy.x - world.movement.half_width * 2 - 1)

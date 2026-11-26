@@ -207,7 +207,7 @@ func test_early_cancel_after_a_late_slash_still_ends_on_the_far_side() -> void:
 		elif not canceled:
 			var move: MoveData = SimCombat.current_move(world, ranger)
 			# Wait until the late slash has landed, then cancel at the next
-			# legal tick (cancel_from is 6, but the far dummy is hit later).
+			# legal tick (cancel_from is 7, but the far dummy is hit later).
 			if move != null and move.id == &"ranger_dash_zx" and ranger.move_tick >= move.cancel_from and dummy.combo >= 1:
 				held = Z
 				canceled = true

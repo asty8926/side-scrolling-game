@@ -53,4 +53,6 @@ func validate() -> Array[String]:
 		problems.append("beyond_edge must be >= 0")
 	if shake_amplitude < 0.0 or shake_decay < 0.0:
 		problems.append("shake_amplitude and shake_decay must be >= 0")
+	if shake_amplitude > 0.0 and shake_decay <= 0.0:
+		problems.append("shake_decay must be > 0 when shake_amplitude is > 0")
 	return problems

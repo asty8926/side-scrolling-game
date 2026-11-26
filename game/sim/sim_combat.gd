@@ -284,12 +284,15 @@ static func separate(world: SimWorld) -> void:
 ## Snap the attacker to the near-side contact of `other` and move `other`
 ## by the overshoot, so a slide travels its full distance with the target.
 static func _drive_from_overlap(attacker: SimFighter, other: SimFighter, low: int, high: int, m: MovementParams) -> void:
-	var contact: int = other.x - attacker.facing * 2 * m.half_width
-	var overshoot: int = (attacker.x - contact) * attacker.facing
+	# Side comes from positions, not facing: a backward recoil must not treat
+	# a dummy behind the attacker as a target in front.
+	var side: int = 1 if attacker.x <= other.x else -1
+	var contact: int = other.x - side * 2 * m.half_width
+	var overshoot: int = (attacker.x - contact) * side
 	if overshoot <= 0:
 		return
-	other.x = clampi(other.x + attacker.facing * overshoot, low, high)
-	attacker.x = clampi(other.x - attacker.facing * 2 * m.half_width, low, high)
+	other.x = clampi(other.x + side * overshoot, low, high)
+	attacker.x = clampi(other.x - side * 2 * m.half_width, low, high)
 
 
 ## Idle bodies: the player is blocked by a monster; the monster is not

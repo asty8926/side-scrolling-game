@@ -133,3 +133,16 @@ func test_committed_camera_params_validate_and_lock_to_center() -> void:
 	assert_almost_eq(params.horizontal_smoothing, 0.0, 0.0001)
 	assert_gt(params.beyond_edge, 8.0, "the continuation covers at least a typical half-screen")
 	assert_true(params.show_door_hints)
+
+
+func test_shake_decay_must_be_positive_when_shake_is_enabled() -> void:
+	var params: CameraParams = CameraParams.new()
+	params.shake_amplitude = 0.08
+	params.shake_decay = 0.0
+	var problems: Array[String] = params.validate()
+	assert_gt(problems.size(), 0, "zero decay with a non-zero amplitude is rejected")
+	params.shake_decay = 18.0
+	assert_eq(params.validate(), [] as Array[String])
+	params.shake_amplitude = 0.0
+	params.shake_decay = 0.0
+	assert_eq(params.validate(), [] as Array[String], "disabled shake may have zero decay")
