@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CameraParams" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/view/camera_params.gd" id="1_params"]
+
+[resource]
+script = ExtResource("1_params")
+distance = 11.0
+height_offset = 2.2
+pitch_degrees = 6.0
+fov = 50.0
+dead_zone_half_width = 0.0
+horizontal_smoothing = 0.0
+vertical_smoothing = 0.0
+beyond_edge = 16.0
+show_door_hints = true
