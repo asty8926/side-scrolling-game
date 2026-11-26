@@ -102,13 +102,18 @@ func reload_path(path: String) -> Array[String]:
 func _apply(path: String, fresh: Resource) -> Array[String]:
 	var world: SimWorld = _driver.world
 	var problems: Array[String] = []
+	var camera_path: String = camera.params.resource_path if camera != null and camera.params != null else ""
 	if fresh is CameraParams:
+		if path != camera_path or camera_path == "":
+			# A CameraParams file at some other watched path (e.g. a room
+			# .tres overwritten by mistake) must not replace the camera.
+			problems.append("%s is not used by the running world" % path)
+			return problems
 		var cam_problems: Array[String] = (fresh as CameraParams).validate()
 		if not cam_problems.is_empty():
 			return cam_problems
-		if camera != null:
-			camera.params = fresh as CameraParams
-			camera.apply_params()
+		camera.params = fresh as CameraParams
+		camera.apply_params()
 		if room_view != null:
 			room_view.params = fresh as CameraParams
 		return []
