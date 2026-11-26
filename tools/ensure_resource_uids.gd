@@ -87,6 +87,11 @@ func _patch(path: String) -> int:
 		push_error("ensure_resource_uids: cannot write %s" % path)
 		return -1
 	file.store_string(text)
+	var err: Error = file.get_error()
+	file = null
+	if err != OK:
+		push_error("ensure_resource_uids: write failed for %s: %s" % [path, error_string(err)])
+		return -1
 	return 1
 
 
@@ -102,6 +107,9 @@ func _ext_path(line: String) -> String:
 
 
 func _uid_for(path: String) -> String:
+	var from_file: String = _uid_stored_for(path)
+	if not from_file.is_empty():
+		return from_file
 	var existing: String = ResourceUID.path_to_uid(path)
 	if existing.begins_with("uid://"):
 		return existing
@@ -109,3 +117,31 @@ func _uid_for(path: String) -> String:
 	if not ResourceUID.has_id(id):
 		ResourceUID.add_id(id, path)
 	return ResourceUID.id_to_text(id)
+
+
+func _uid_stored_for(path: String) -> String:
+	var uid_file: String = path + ".uid"
+	if FileAccess.file_exists(uid_file):
+		var body: String = FileAccess.get_file_as_string(uid_file).strip_edges()
+		if body.begins_with("uid://"):
+			return body
+	if path.ends_with(".tscn") or path.ends_with(".tres"):
+		if FileAccess.file_exists(path):
+			var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+			if file != null:
+				return _header_uid(file.get_line())
+	return ""
+
+
+func _header_uid(header: String) -> String:
+	var start: int = header.find("uid=\"")
+	if start < 0:
+		return ""
+	start += 5
+	var end: int = header.find("\"", start)
+	if end < 0:
+		return ""
+	var uid: String = header.substr(start, end - start)
+	if uid.begins_with("uid://"):
+		return uid
+	return ""
