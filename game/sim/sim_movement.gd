@@ -53,6 +53,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 			world.emit_event(&"dash_reverse", f.id)
 		elif f.is_grounded() and dir != f.dash_dir:
 			f.dash_dir = 0
+			f.dash_attack_ticks = world.input_settings.dash_attack_linger_ticks
 			world.emit_event(&"dash_stop", f.id)
 
 	# Horizontal speed.

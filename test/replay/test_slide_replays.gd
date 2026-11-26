@@ -37,6 +37,20 @@ func test_dash_z_starts_the_slide_not_neutral_z() -> void:
 	assert_eq(events_of(result, "hit").size(), 1, "the slide kick hits the dummy once")
 
 
+func test_dash_z_starts_when_z_is_pressed_on_the_second_tap() -> void:
+	# The second → and Z on the same tick (a common keyboard timing).
+	var result: ReplayRunner.Result = _run([[R, 3], [0, 3], [R | Z, 1], [0, 20]])
+	var starts: PackedStringArray = events_of(result, "move_start")
+	assert_eq(starts.size(), 1)
+	assert_string_contains(starts[0], "ranger_dash_z")
+	assert_eq(events_of(result, "hit").size(), 1, "the slide kick still hits the dummy")
+
+
+func test_dash_z_starts_after_releasing_the_run() -> void:
+	var result: ReplayRunner.Result = _run([[R, 3], [0, 3], [R, 8], [0, 4], [Z, 1], [0, 20]])
+	assert_string_contains(events_of(result, "move_start")[0], "ranger_dash_z")
+
+
 func test_standing_z_is_still_the_neutral_string() -> void:
 	var result: ReplayRunner.Result = _run([[Z, 1], [0, 10]])
 	assert_string_contains(events_of(result, "move_start")[0], "ranger_z1")

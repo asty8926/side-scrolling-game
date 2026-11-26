@@ -6,3 +6,4 @@
 script = ExtResource("1_settings")
 double_tap_window_ticks = 12
 buffer_ticks = 8
+dash_attack_linger_ticks = 12

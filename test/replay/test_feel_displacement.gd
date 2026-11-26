@@ -113,9 +113,9 @@ func test_dash_wx_dashes_well_past_the_target_and_w_still_connects() -> void:
 	var dummy: SimFighter = world.fighters[1]
 	var trace: Array[Mark] = _trace(world, [[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 10], [X, 1], [0, 30]])
 	var steps: Dictionary[String, int] = _steps(trace)
-	_assert_cw(steps, "ranger_dash_zx", 3.0, 4.5)
+	_assert_cw(steps, "ranger_dash_zx", 3.5, 5.5)
 	var behind: float = float(ranger.x - dummy.x) / CW
-	assert_between(behind, 1.5, 2.2, "ends %.2f CW past the dummy (reference ~1.8 CW, center to center)" % behind)
+	assert_between(behind, 2.2, 2.8, "ends %.2f CW past the dummy (reference ~2.5 CW, center to center)" % behind)
 	# The follow-up kicks must still reach after the longer pass.
 	var follow: Array[Mark] = _trace(world, _mash(Z, 6, 3, 40))
 	assert_eq(follow[0].id, "ranger_z1")
@@ -131,3 +131,39 @@ func test_w_chain_against_the_dummy_keeps_every_hit_in_range() -> void:
 	_trace(world, _mash(Z, 6, 6, 60))
 	assert_eq(world.fighters[1].combo, 4, "ZZZZ: four hits")
 	assert_between(float(ranger.x - start) / CW, 1.0, 2.2, "the whole string walks the ranger forward")
+
+
+func test_dash_w_on_the_same_tick_as_the_second_tap_slides() -> void:
+	# Human >>W often puts W on the same tick as the second →. Combat used to
+	# run before the dash started, so that input became standing Z (no slide).
+	var trace: Array[Mark] = _trace(_open(), [[R, 3], [0, 3], [R | Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_dash_z")
+	_assert_cw(_steps(trace), "ranger_dash_z", 1.5, 2.5)
+
+
+func test_dash_w_after_holding_the_run_slides() -> void:
+	# Double-tap, hold the run for a stretch, then W while still holding.
+	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 20], [R | Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_dash_z")
+	_assert_cw(_steps(trace), "ranger_dash_z", 1.5, 2.5)
+
+
+func test_dash_w_after_releasing_the_run_still_slides() -> void:
+	# Double-tap, hold, release, then W a few ticks later (still in linger).
+	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 20], [0, 4], [Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_dash_z")
+	_assert_cw(_steps(trace), "ranger_dash_z", 1.5, 2.5)
+
+
+func test_w_after_the_dash_linger_expires_is_the_standing_kick() -> void:
+	# Linger is 12 ticks; 13 ticks after release must be standing Z, no slide.
+	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 8], [0, 13], [Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_z1")
+	_assert_cw(_steps(trace), "ranger_z1", -0.05, 0.05)
+
+
+func test_w_during_a_walk_is_the_standing_kick() -> void:
+	# Holding → without a double-tap is a walk; W must not become a slide.
+	var trace: Array[Mark] = _trace(_open(), [[R, 20], [R | Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_z1")
+	_assert_cw(_steps(trace), "ranger_z1", -0.05, 0.05)
