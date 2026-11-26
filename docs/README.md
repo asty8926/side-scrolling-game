@@ -22,6 +22,7 @@ Start here. These docs describe the Elsword systems Asty (GitHub `asty8926`) lov
 | Hit-stop, impact, hitstun, input buffer, cancel windows, cancels into skills | [systems/05-game-feel.md](systems/05-game-feel.md) | M1 | [#26](https://github.com/asty8926/side-scrolling-game/issues/26) |
 | How far each hit moves the character (per-hit steps, recoil, slide and dash-through distances), feel checks | [reference/README.md](reference/README.md), [reference/rena-combo-movement.md](reference/rena-combo-movement.md) | M1 | [#61](https://github.com/asty8926/side-scrolling-game/issues/61) |
 | Side camera follow (centered, no wall clamp) and what was measured from footage | [reference/camera.md](reference/camera.md) | M1 | |
+| Hitbox sizes versus footage (recommendation only; no size change in that pass) | [reference/hitboxes.md](reference/hitboxes.md) | M1 | |
 | Awakening beads, Ctrl/Cmd, transformation, Way of the Sword, Ara's Eun Mode | [systems/06-awakening.md](systems/06-awakening.md) | M4 | [#27](https://github.com/asty8926/side-scrolling-game/issues/27) |
 | Rena's class resource (Nature's Force / NF) | [systems/07-natures-force.md](systems/07-natures-force.md) | M4 | [#28](https://github.com/asty8926/side-scrolling-game/issues/28) |
 | MP gain/spend, no mana potions, MP regen, skill MP tiers | [systems/08-mp-economy.md](systems/08-mp-economy.md) | M1, M4 | [#29](https://github.com/asty8926/side-scrolling-game/issues/29) |
