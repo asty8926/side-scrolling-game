@@ -8,7 +8,7 @@ Offsets are the center of the box, forward from the fighter's feet. 1 CW (charac
 
 ## Character boxes
 
-In the clip, Twilight Rena is about 45 px wide and about 90–100 px tall [est]. Walk speed in the same clip is about 234 px/s. The sim walk is 350 sub/tick, which gives a rough scale of 1 px ≈ 15 sub; comparing the 45 px width to our 600-sub hurtbox gives about 13 sub/px. Both are [est].
+In the clip, Twilight Rena is about 45 px wide and about 90–100 px tall [est]. Walk speed in the same clip is about 234 px/s. The sim walk is 65 sub/tick at 60 ticks per second, or 3900 sub/s, which gives a rough scale of 1 px ≈ 17 sub (3900 / 234 ≈ 16.7). Comparing the 45 px width to our 600-sub hurtbox gives about 13 sub/px, so the two estimates differ. All of those are [est].
 
 | Box | Ours | Footage [est] | Notes |
 |---|---|---|---|
@@ -30,7 +30,7 @@ In the clip, Twilight Rena is about 45 px wide and about 90–100 px tall [est].
 | `>>ZX` | 200 | 900 × 900 | 650 | 1000 | Slash-through; the box sits around her body as she passes. |
 | `>>ZZ` | 550 | 750 × 700 | 925 | 1275 | |
 
-The first `ZZ` spark in the clip sits close to her torso, almost body-to-body, not a poke two character-widths out [est]. Our current `Z` 1 can still hit a dummy whose center is 1.60 m away, which is a bit long versus that picture. Body-to-body still connects (touching centers are 650 sub apart; `Z` 1's half-widths still overlap).
+The first `ZZ` spark in the clip sits close to her torso, almost body-to-body, not a poke two character-widths out [est]. The second kick of the same `ZZ` also lands close to the body, not out at `Z` 2's 1.40 m max range [est]; I did not get a separate pixel reach for it. Our current `Z` 1 can still hit a dummy whose center is 1.60 m away, which is a bit long versus that picture. Body-to-body still connects (touching centers are 650 sub apart; `Z` 1's half-widths still overlap).
 
 `Z` 1 and `Z` 2 were lengthened in #64 so the standing `WWW` follow-up still lands after a 2.5 CW `>>WX` (the dummy is pushed away as she passes). Shortening them back without also ending the pass closer would make that follow-up miss again.
 
