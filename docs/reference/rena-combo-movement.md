@@ -45,6 +45,21 @@ Displacement is per chain step, measured in open space: her x on the next step's
 
 Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2635 sub (4.4 CW). It ends 1500 sub (2.5 CW) past the dummy (`pass_overshoot` 900). The first two follow-up kicks had to reach farther to still land after the dummy is pushed away (`Z` 1: offset 800, width 900; `Z` 2: offset 650, width 800). A standing first kick also reaches a bit farther. A full Elsword-size comparison is still open. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
 
+
+## Arrows (`XXXX`)
+
+ElWiki describes the string ("Fires 2 arrows, followed by a backflip and shooting 2 arrows", then a knockdown shot) but gives no range or frame data. No clean open-space `XXXX` clip was available (training clips hit a dummy at close range; dungeon clips cut). Values below are [ours], chosen so the arrows feel closer to a screen-width shot and so mashing cannot skip the bow animation.
+
+| Thing | Previous | Ours | Notes |
+|---|---|---|---|
+| Arrow speed (`X` 1–3) | 400 sub/tick | 400 sub/tick (unchanged) | 6.67 m/s |
+| Lifetime (`X` 1–3) | 30 ticks (12.0 m of flight, 20 CW) | **17 ticks (6.8 m of flight, 11.3 CW)** | Spawns 0.4 m in front of the ranger and disappears 7.2 m from her, just inside a visible half-screen (~7.5 m at the default camera). |
+| Final shot (`X` 4) | 500 sub/tick × 30 (15.0 m of flight) | **500 × 14 ticks (7.0 m of flight, 11.7 CW)** | Disappears 7.4 m from the ranger. Same idea, slightly snappier shot. |
+| `X` 1 and 2 `cancel_from` | 8 ticks | **16 ticks** | The arrow fires at tick 6; the next press cannot start until 16, so a mash cannot go faster than the animation. Buffer still delivers a press that arrived a little early. |
+| `X` 3 `cancel_from` (backflip, two arrows) | 16 | **22** | After the second arrow (spawn tick 14) plus a short follow-through. |
+
+A press faster than `cancel_from` is held in the 8-tick input buffer and fires at the first legal tick; it does not start the next arrow early.
+
 ## Command timing for `>>Z`
 
 `>>Z` (Asty's `>>W`) is a dash command: it must follow a `>>` run, not a walk. Three timings all start the sliding kick:
