@@ -146,3 +146,16 @@ func test_shake_decay_must_be_positive_when_shake_is_enabled() -> void:
 	params.shake_amplitude = 0.0
 	params.shake_decay = 0.0
 	assert_eq(params.validate(), [] as Array[String], "disabled shake may have zero decay")
+
+
+func test_invalid_camera_params_are_rejected_on_apply() -> void:
+	var camera: SideCamera = SideCamera.new()
+	add_child_autofree(camera)
+	var bad: CameraParams = CameraParams.new()
+	bad.shake_amplitude = 0.08
+	bad.shake_decay = 0.0
+	camera.params = bad
+	camera.apply_params()
+	assert_push_error_count(1)
+	assert_gt(camera.params.shake_decay, 0.0, "invalid params are replaced with defaults")
+	assert_eq(camera.params.validate(), [] as Array[String])

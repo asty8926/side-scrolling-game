@@ -16,6 +16,8 @@ var _initialized: bool = false
 var _has_focus: bool = false
 var _shake: float = 0.0
 var _shake_phase: float = 0.0
+## Last params that passed validate(); so we only reject an invalid resource once.
+var _applied: CameraParams
 
 
 func _ready() -> void:
@@ -29,6 +31,12 @@ func _ready() -> void:
 ## Applies framing from `params` (also called after a hot reload).
 func apply_params() -> void:
 	_ensure_params()
+	if params != _applied:
+		var problems: Array[String] = params.validate()
+		if not problems.is_empty():
+			push_error("SideCamera: invalid CameraParams (%s); using defaults" % "; ".join(problems))
+			params = CameraParams.new()
+		_applied = params
 	fov = params.fov
 	rotation_degrees = Vector3(-params.pitch_degrees, 0.0, 0.0)
 
