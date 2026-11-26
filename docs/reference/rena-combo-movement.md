@@ -41,11 +41,20 @@ Displacement is per chain step, measured in open space: her x on the next step's
 | `X` 3rd (backflip, 2 arrows) | backflip | [doc] for the backflip, distance [ours] | -900 | -1.50 | 0-14 | -1.8..-1.2 |
 | `X` 4th arrow | push back | [obs] | -300 | -0.50 | 9-16 | -0.7..-0.35 |
 | `>>Z` slide kick | real slide, keeps dash speed then slows | [doc] for "slide", distance [ours] (unverified: no clean footage) | +1140 (150→40 per tick) | +1.90 | 0-11 | 1.5..2.5 |
-| `>>ZX` dash-through | travels past the target and drags it along; the 2019 rework "dashes farther behind the enemy" | [doc] for direction and drag, distance [est] | +1820 root motion, ends 450 past the far side | ≈ +3.8 travelled | 0-13 | travel 3.0..4.5, ends 1.5..2.2 CW past the target (center to center) |
+| `>>ZX` dash-through | travels past the target and drags it along; the 2019 rework "dashes farther behind the enemy"; Asty asked for it to go much further | [doc] for direction and drag, distance [ours] (overshoot doubled after playtest) | +1820 root motion, ends 900 past the far side | ≈ +4.4 travelled | 0-13 | travel 3.5..5.5, ends 2.2..2.8 CW past the target (center to center) |
 
-Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2259 sub (3.8 CW). It drags the dummy 535 sub and ends 1124 sub (1.9 CW) past it, close enough for `ZZZ` to keep the combo going. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2635 sub (4.4 CW). It ends 1500 sub (2.5 CW) past the dummy (`pass_overshoot` 900). The first two follow-up kicks had to reach farther to still land after the dummy is pushed away (`Z` 1: offset 800, width 900; `Z` 2: offset 650, width 800). A standing first kick also reaches a bit farther. A full Elsword-size comparison is still open. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+
+## Command timing for `>>Z`
+
+`>>Z` (Asty's `>>W`) is a dash command: it must follow a `>>` run, not a walk. Three timings all start the sliding kick:
+
+- W while still holding the run, including many ticks after the double-tap.
+- W on the same tick as the second →. Combat selects the attack before movement starts the dash, so this tick has to count as a dash command on its own.
+- W up to `dash_attack_linger_ticks` (12 ticks, [ours]) after the run key is released. After that window, W is the standing first kick and does not slide.
 
 ## Footage
+
 
 Clips are reference only. They are not in the repo; they are kept on the build box under `/workspace/gamedev-ref/raw/`.
 

@@ -13,7 +13,7 @@ extends RefCounted
 
 ## Snapshot header. Bump SNAPSHOT_VERSION whenever the field list changes.
 const SNAPSHOT_MAGIC: int = 0x57534D53  # "SMSW"
-const SNAPSHOT_VERSION: int = 6
+const SNAPSHOT_VERSION: int = 7
 ## Players a world accepts input from (party of up to 4).
 const MAX_PLAYERS: int = 4
 ## Most fighters (players + dummies/mobs) a world and its snapshot hold.

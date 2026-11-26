@@ -56,6 +56,8 @@ var combo: int = 0
 var last_damage: int = 0
 ## Where the debug reset puts the fighter back.
 var home_x: int = 0
+## Ticks a dash attack may still start after the run key was released (0 = none).
+var dash_attack_ticks: int = 0
 
 ## Fixed fields in snapshot order (hit_keys follow as a count + values).
 ## Append new fields at the end and bump SimWorld.SNAPSHOT_VERSION.
@@ -63,7 +65,7 @@ var home_x: int = 0
 ## SimCombat.apply_motion before any hit of the tick, so it is never stale).
 var stunned_this_tick: bool = false
 
-const FIELD_COUNT: int = 21
+const FIELD_COUNT: int = 22
 ## Most hits one move can record (hitboxes x targets).
 const MAX_HIT_KEYS: int = 256
 
@@ -81,7 +83,7 @@ func is_in_hitstun() -> bool:
 
 
 func write_to(buf: StreamPeerBuffer) -> void:
-	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks, hp, hitstun, kd, combo, last_damage, home_x]:
+	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks, hp, hitstun, kd, combo, last_damage, home_x, dash_attack_ticks]:
 		buf.put_64(value)
 	buf.put_32(hit_keys.size())
 	for key: int in hit_keys:
@@ -113,6 +115,7 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 	f.combo = buf.get_64()
 	f.last_damage = buf.get_64()
 	f.home_x = buf.get_64()
+	f.dash_attack_ticks = buf.get_64()
 	var key_count: int = buf.get_32()
 	if key_count < 0 or key_count > MAX_HIT_KEYS or buf.get_available_bytes() < key_count * 8:
 		return null
@@ -122,6 +125,6 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 		return null
 	if f.air_jumps < 0 or absi(f.dash_dir) > 1 or f.drop_ticks < 0:
 		return null
-	if f.move < NO_MOVE or f.move_tick < 0 or f.idle_ticks < 0 or f.hp < 0 or f.hitstun < 0 or f.kd < 0 or f.combo < 0:
+	if f.move < NO_MOVE or f.move_tick < 0 or f.idle_ticks < 0 or f.hp < 0 or f.hitstun < 0 or f.kd < 0 or f.combo < 0 or f.dash_attack_ticks < 0:
 		return null
 	return f

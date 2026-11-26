@@ -34,6 +34,7 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	var data: CharacterData = world.characters[f.character]
 	if f.hitstun > 0:
 		f.idle_ticks = 0
+		f.dash_attack_ticks = 0
 		return  # cannot act in hitstun (it expires in apply_motion, after movement)
 	f.kd = maxi(0, f.kd - data.kd_recovery_per_tick)
 	var moveset: MoveSet = data.moveset
@@ -68,14 +69,27 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	var buffer: int = mini(world.input_settings.buffer_ticks, f.idle_ticks)
 	f.idle_ticks = mini(f.idle_ticks + 1, InputHistory.CAPACITY)
 	if not f.is_grounded():
+		_age_dash_attack_window(f)
 		return  # air commands are M1
-	# While dashing (`>>`), dash attacks; otherwise neutral ones.
-	var wanted: MoveData.Start = MoveData.Start.DASH if f.dash_dir != 0 else MoveData.Start.NEUTRAL
+	# Dash attacks: currently running, the run key just released (linger), or
+	# the second tap of `>>` / `<<` on this tick (combat runs before movement
+	# starts the dash, so a same-tick Z would otherwise become a standing kick).
+	# A button with no dash-start move (today: X) still starts its standing
+	# attack; otherwise the press would sit in the buffer and expire mid-linger.
+	var dash_command: int = _dash_command_dir(world, f, history)
+	if dash_command != 0:
+		for i: int in moveset.moves.size():
+			var candidate: MoveData = moveset.moves[i]
+			if candidate.start == MoveData.Start.DASH and history.buffered_press(_button(candidate), buffer):
+				f.facing = dash_command
+				_start(world, f, i)
+				return
 	for i: int in moveset.moves.size():
 		var candidate: MoveData = moveset.moves[i]
-		if candidate.start == wanted and history.buffered_press(_button(candidate), buffer):
+		if candidate.start == MoveData.Start.NEUTRAL and history.buffered_press(_button(candidate), buffer):
 			_start(world, f, i)
 			return
+	_age_dash_attack_window(f)
 
 
 static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
@@ -84,6 +98,7 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 	f.idle_ticks = 0
 	f.hit_keys.clear()
 	f.dash_dir = 0
+	f.dash_attack_ticks = 0
 	f.vx = 0
 	var move: MoveData = current_move(world, f)
 	world.emit_event(&"move_start", f.id, 0, move.id)
@@ -420,6 +435,7 @@ static func _take_hit(world: SimWorld, dir: int, target: SimFighter, move: MoveD
 	target.move_tick = 0
 	target.hit_keys.clear()
 	target.dash_dir = 0
+	target.dash_attack_ticks = 0
 	var m: MovementParams = world.movement
 	target.x = clampi(target.x + move.pushback * dir, world.room.left + m.half_width, world.room.right - m.half_width)
 
@@ -431,6 +447,28 @@ static func overlaps(attacker: SimFighter, hit: HitboxData, target: SimFighter, 
 	var ay: int = attacker.y + hit.offset_y
 	var by: int = target.y + hurt.offset_y
 	return absi(ax - bx) * 2 <= hit.width + hurt.width and ay <= by + hurt.height and ay + hit.height >= by
+
+
+## Counts down the post-release dash-attack window. Also called while airborne
+## so a jump cannot extend the window past dash_attack_linger_ticks.
+static func _age_dash_attack_window(f: SimFighter) -> void:
+	if f.dash_dir == 0 and f.dash_attack_ticks > 0:
+		f.dash_attack_ticks -= 1
+
+
+## Facing used for a dash attack this tick: an active run, a just-released run
+## still inside the linger window, or a `>>` / `<<` whose second tap is now.
+static func _dash_command_dir(world: SimWorld, f: SimFighter, history: InputHistory) -> int:
+	if f.dash_dir != 0:
+		return f.dash_dir
+	if f.dash_attack_ticks > 0:
+		return f.facing
+	var window: int = world.input_settings.double_tap_window_ticks
+	if history.double_tap(InputFrame.RIGHT, window):
+		return SimFighter.RIGHT
+	if history.double_tap(InputFrame.LEFT, window):
+		return SimFighter.LEFT
+	return 0
 
 
 static func _button(move: MoveData) -> int:

@@ -7,18 +7,18 @@
 
 [sub_resource type="Resource" id="hit_1"]
 script = ExtResource("2_hit")
-offset_x = 550
+offset_x = 800
 offset_y = 300
-width = 700
+width = 900
 height = 700
 from_tick = 5
 to_tick = 7
 
 [sub_resource type="Resource" id="hit_2"]
 script = ExtResource("2_hit")
-offset_x = 550
+offset_x = 650
 offset_y = 300
-width = 700
+width = 800
 height = 700
 from_tick = 5
 to_tick = 7
@@ -345,7 +345,7 @@ cancel_to = 22
 root_motion = PackedInt32Array(130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130)
 pass_from = 2
 pass_to = 16
-pass_overshoot = 450
+pass_overshoot = 900
 turn_at_end = true
 carry_to = 7
 
