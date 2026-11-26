@@ -6,6 +6,7 @@ Asty judges feel by playing. Agents can't, so every move that moves the characte
 
 - [camera.md](camera.md): how the side camera follows the ranger, and what was measured from Elsword footage.
 - [rena-combo-movement.md](rena-combo-movement.md): per-hit displacement of Rena's strings. Lists what ElWiki documents, what was estimated from footage, and what we chose.
+- [hitboxes.md](hitboxes.md): ranger and dummy box sizes versus footage, and the standing-kick reach tradeoff left for Asty.
 - `test/replay/test_feel_displacement.gd`: asserts each chain step's direction and rough distance, using the ranges in that table.
 
 ## Adding or retuning a move
