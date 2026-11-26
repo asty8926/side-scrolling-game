@@ -32,8 +32,8 @@ You do not need Godot for this. Later builds replace the previous artifact; down
 No coding needed. You only install Godot once.
 
 1. **Install Godot 4.7.2** (free): download "Godot Engine - macOS" for **4.7.2-stable** from the [official release page](https://github.com/godotengine/godot/releases/tag/4.7.2-stable) (file `Godot_v4.7.2-stable_macos.universal.zip`), unzip it and drag `Godot.app` into Applications. Use exactly this version: newer or older ones may change things.
-2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it, then `git pull` for updates).
-3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files.
+2. **Get the project**: on this GitHub page click **Code > Download ZIP** and unzip it (or `git clone` it, then `git pull` for updates). If `git pull` ever says you have unstaged changes after you only opened the project, close Godot and run `git reset --hard && git pull` once (that also drops any `.tres` numbers you tweaked and did not tell us about).
+3. **Open it**: start Godot, click **Import**, pick the `project.godot` file in the unzipped folder, then **Import & Edit**. The first opening takes a few seconds while Godot imports files. After that, a plain `git pull` should just work: opening the project must not rewrite tracked files.
 4. **Run the project**: press **F5** (on a Mac keyboard you may need **fn + F5**), or click the ▶ Play button at the top right. A window opens on the **test room**: a floor, wooden platforms stacked exactly one jump apart, and a blue capsule (you) whose yellow nose shows which way it faces. Click inside the window once so it gets the keyboard, then use the keys below. Close the window (or press **F8** in the editor) to stop.
 
 What to try:

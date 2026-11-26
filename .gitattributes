@@ -1,4 +1,4 @@
-# Normalize EOL for all text files (Godot uses LF).
+# Normalize EOL for all text files (Godot uses LF), including .uid and .import.
 * text=auto eol=lf
 
 # Binary assets

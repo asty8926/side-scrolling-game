@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="InputSettings" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="InputSettings" load_steps=2 format=3 uid="uid://dn1d050bg7skm"]
 
-[ext_resource type="Script" path="res://game/sim/input_settings.gd" id="1_settings"]
+[ext_resource type="Script" uid="uid://bcyutpi5br3gq" path="res://game/sim/input_settings.gd" id="1_settings"]
 
 [resource]
 script = ExtResource("1_settings")

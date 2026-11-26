@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="RoomLayout" load_steps=8 format=3]
+[gd_resource type="Resource" script_class="RoomLayout" load_steps=8 format=3 uid="uid://bxpj8y2egvrw2"]
 
-[ext_resource type="Script" path="res://game/sim/room_layout.gd" id="1_room"]
-[ext_resource type="Script" path="res://game/sim/room_platform.gd" id="2_platform"]
+[ext_resource type="Script" uid="uid://xfw6qighy7hi" path="res://game/sim/room_layout.gd" id="1_room"]
+[ext_resource type="Script" uid="uid://b3ditnhlsoiya" path="res://game/sim/room_platform.gd" id="2_platform"]
 
 [sub_resource type="Resource" id="Platform_left1"]
 script = ExtResource("2_platform")

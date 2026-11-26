@@ -59,6 +59,11 @@ jobs:
           grep -Eq '<testsuites[^>]* tests="[1-9][0-9]*"' reports/gut-junit.xml \
             || { echo "GUT report contains no tests"; exit 1; }
 
+      - name: Opening the editor must not dirty the checkout
+        # Import already ran above. This also re-runs the UID pass so a new
+        # .tscn / .tres committed without uid:// references fails the build.
+        run: GODOT=$HOME/godot/godot SKIP_IMPORT=1 bash tools/check_editor_clean.sh
+
       - name: Upload GUT results
         if: always()
         uses: actions/upload-artifact@v4
