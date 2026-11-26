@@ -69,21 +69,27 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	var buffer: int = mini(world.input_settings.buffer_ticks, f.idle_ticks)
 	f.idle_ticks = mini(f.idle_ticks + 1, InputHistory.CAPACITY)
 	if not f.is_grounded():
+		_age_dash_attack_window(f)
 		return  # air commands are M1
 	# Dash attacks: currently running, the run key just released (linger), or
 	# the second tap of `>>` / `<<` on this tick (combat runs before movement
 	# starts the dash, so a same-tick Z would otherwise become a standing kick).
+	# A button with no dash-start move (today: X) still starts its standing
+	# attack; otherwise the press would sit in the buffer and expire mid-linger.
 	var dash_command: int = _dash_command_dir(world, f, history)
-	var wanted: MoveData.Start = MoveData.Start.DASH if dash_command != 0 else MoveData.Start.NEUTRAL
+	if dash_command != 0:
+		for i: int in moveset.moves.size():
+			var candidate: MoveData = moveset.moves[i]
+			if candidate.start == MoveData.Start.DASH and history.buffered_press(_button(candidate), buffer):
+				f.facing = dash_command
+				_start(world, f, i)
+				return
 	for i: int in moveset.moves.size():
 		var candidate: MoveData = moveset.moves[i]
-		if candidate.start == wanted and history.buffered_press(_button(candidate), buffer):
-			if dash_command != 0:
-				f.facing = dash_command
+		if candidate.start == MoveData.Start.NEUTRAL and history.buffered_press(_button(candidate), buffer):
 			_start(world, f, i)
 			return
-	if f.dash_dir == 0 and f.dash_attack_ticks > 0:
-		f.dash_attack_ticks -= 1
+	_age_dash_attack_window(f)
 
 
 static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
@@ -441,6 +447,13 @@ static func overlaps(attacker: SimFighter, hit: HitboxData, target: SimFighter, 
 	var ay: int = attacker.y + hit.offset_y
 	var by: int = target.y + hurt.offset_y
 	return absi(ax - bx) * 2 <= hit.width + hurt.width and ay <= by + hurt.height and ay + hit.height >= by
+
+
+## Counts down the post-release dash-attack window. Also called while airborne
+## so a jump cannot extend the window past dash_attack_linger_ticks.
+static func _age_dash_attack_window(f: SimFighter) -> void:
+	if f.dash_dir == 0 and f.dash_attack_ticks > 0:
+		f.dash_attack_ticks -= 1
 
 
 ## Facing used for a dash attack this tick: an active run, a just-released run

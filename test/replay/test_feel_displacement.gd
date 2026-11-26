@@ -9,6 +9,7 @@ extends ReplayTest
 const Z: int = InputFrame.Z
 const X: int = InputFrame.X
 const R: int = InputFrame.RIGHT
+const U: int = InputFrame.UP
 ## One character width in sub-units (ranger hurtbox width).
 const CW: int = 600
 
@@ -165,5 +166,21 @@ func test_w_after_the_dash_linger_expires_is_the_standing_kick() -> void:
 func test_w_during_a_walk_is_the_standing_kick() -> void:
 	# Holding → without a double-tap is a walk; W must not become a slide.
 	var trace: Array[Mark] = _trace(_open(), [[R, 20], [R | Z, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_z1")
+	_assert_cw(_steps(trace), "ranger_z1", -0.05, 0.05)
+
+
+func test_x_after_releasing_the_run_is_the_standing_arrow() -> void:
+	# There is no dash-start X yet, so X during the linger must still start x1
+	# instead of being held in the buffer until it expires.
+	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 8], [0, 4], [X, 1], [0, 40]])
+	assert_eq(trace[0].id, "ranger_x1")
+	_assert_cw(_steps(trace), "ranger_x1", -0.05, 0.05)
+
+
+func test_dash_linger_expires_during_a_jump() -> void:
+	# Release the run, jump, land after the 12-tick linger would have ended, then W.
+	# The window must age in the air, so this is the standing kick, not a slide.
+	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 8], [0, 1], [U, 1], [0, 80], [Z, 1], [0, 40]])
 	assert_eq(trace[0].id, "ranger_z1")
 	_assert_cw(_steps(trace), "ranger_z1", -0.05, 0.05)
