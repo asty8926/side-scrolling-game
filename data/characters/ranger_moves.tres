@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="MoveSet" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="MoveSet" load_steps=28 format=3 uid="uid://bi1rsnelcgypp"]
 
-[ext_resource type="Script" path="res://game/sim/move_data.gd" id="1_move"]
-[ext_resource type="Script" path="res://game/sim/hitbox_data.gd" id="2_hit"]
-[ext_resource type="Script" path="res://game/sim/move_set.gd" id="3_set"]
-[ext_resource type="Script" path="res://game/sim/projectile_data.gd" id="4_shot"]
+[ext_resource type="Script" uid="uid://du5h0ty03rudi" path="res://game/sim/move_data.gd" id="1_move"]
+[ext_resource type="Script" uid="uid://cnyj8ycuh8wsn" path="res://game/sim/hitbox_data.gd" id="2_hit"]
+[ext_resource type="Script" uid="uid://cw2xu5p1cr50c" path="res://game/sim/move_set.gd" id="3_set"]
+[ext_resource type="Script" uid="uid://benujdnqeunef" path="res://game/sim/projectile_data.gd" id="4_shot"]
 
 [sub_resource type="Resource" id="hit_1"]
 script = ExtResource("2_hit")

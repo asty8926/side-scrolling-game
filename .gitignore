@@ -2,6 +2,13 @@
 .godot/
 /android/
 
+# Imported translations generated from CSV
+*.translation
+
+# Godot .NET / C# leftovers (this project does not use C#)
+.mono/
+mono_crash.*.json
+
 # Export output (local builds)
 /build/
 

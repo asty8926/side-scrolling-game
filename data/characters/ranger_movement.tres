@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="MovementParams" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MovementParams" load_steps=2 format=3 uid="uid://d1f5ks7pp05n2"]
 
-[ext_resource type="Script" path="res://game/sim/movement_params.gd" id="1_movement"]
+[ext_resource type="Script" uid="uid://cxdb88o6mw240" path="res://game/sim/movement_params.gd" id="1_movement"]
 
 [resource]
 script = ExtResource("1_movement")
