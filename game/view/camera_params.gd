@@ -33,6 +33,12 @@ extends Resource
 ## visible through them. # ours
 @export var show_door_hints: bool = true
 
+@export_group("Shake")
+## Peak offset in meters on a heavy hit. 0 disables. View only. # ours
+@export_range(0.0, 0.5, 0.005, "suffix:m") var shake_amplitude: float = 0.08
+## How quickly the shake dies out (higher = shorter). # ours
+@export_range(0.0, 40.0, 0.1) var shake_decay: float = 18.0
+
 
 ## Returns the problems; empty when the data is usable.
 func validate() -> Array[String]:
@@ -45,4 +51,8 @@ func validate() -> Array[String]:
 		problems.append("dead_zone_half_width and smoothing must be >= 0")
 	if beyond_edge < 0.0:
 		problems.append("beyond_edge must be >= 0")
+	if shake_amplitude < 0.0 or shake_decay < 0.0:
+		problems.append("shake_amplitude and shake_decay must be >= 0")
+	if shake_amplitude > 0.0 and shake_decay <= 0.0:
+		problems.append("shake_decay must be > 0 when shake_amplitude is > 0")
 	return problems

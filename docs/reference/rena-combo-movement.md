@@ -40,10 +40,36 @@ Displacement is per chain step, measured in open space: her x on the next step's
 | `X` 2nd arrow | small push back | [obs] | -150 | -0.25 | 2-7 | -0.4..-0.15 |
 | `X` 3rd (backflip, 2 arrows) | backflip | [doc] for the backflip, distance [ours] | -900 | -1.50 | 0-14 | -1.8..-1.2 |
 | `X` 4th arrow | push back | [obs] | -300 | -0.50 | 9-16 | -0.7..-0.35 |
-| `>>Z` slide kick | real slide, keeps dash speed then slows | [doc] for "slide", distance [ours] (unverified: no clean footage) | +1140 (150→40 per tick) | +1.90 | 0-11 | 1.5..2.5 |
-| `>>ZX` dash-through | travels past the target and drags it along; the 2019 rework "dashes farther behind the enemy"; Asty asked for it to go much further | [doc] for direction and drag, distance [ours] (overshoot doubled after playtest) | +1820 root motion, ends 900 past the far side | ≈ +4.4 travelled | 0-13 | travel 3.5..5.5, ends 2.2..2.8 CW past the target (center to center) |
+| `>>Z` slide kick | run converts to the slide immediately on Z [seen]; footage length ~1.5-2 CW in ~15-20 frames [guess]; Asty asked for it to go much further than our previous 1.9 CW, so this is doubled on purpose | [seen] for instant convert, [guess] for footage length, distance [ours] (Asty's choice, longer than footage) | +2280 (300→80 per tick) | +3.80 | 0-11 | 3.2..4.5 |
+| `>>ZX` dash-through | X can be pressed as soon as the slide connects (hit-cancel) [seen]; Reboot/Night Watcher travels ~3-4 CW past the target before the backward arrow [seen]; we land at 3.5 CW past [ours] | [seen] for hit-cancel and past-target travel, distance [ours] | +1820 root motion, ends 1500 past the far side | ≈ +5.4 travelled | 0-13 | travel 4.5..6.5, ends 3.0..4.2 CW past the target (center to center) |
 
-Measured in the sim with the training dummy (ranger at 0, dummy at +1000): `>>Z` moves her 690 sub (1.15 CW) and pushes the dummy along by the same amount. `>>ZX` then moves her 2635 sub (4.4 CW). It ends 1500 sub (2.5 CW) past the dummy (`pass_overshoot` 900). The first two follow-up kicks had to reach farther to still land after the dummy is pushed away (`Z` 1: offset 800, width 900; `Z` 2: offset 650, width 800). A standing first kick also reaches a bit farther. A full Elsword-size comparison is still open. Screenshot after `>>WX` in the game (combo 2, the ranger past the dummy and turned to face it): [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+Open-space `>>Z` now travels 2280 sub (3.80 CW). Against the training dummy (ranger at 0, dummy at +1000), the slide is no longer eaten by the body box: leftover root motion drives the dummy forward so they travel together, and the kick still lands. `>>ZX` `pass_overshoot` is 1500, so she ends 2100 sub (3.5 CW, center to center) past the dummy. `dash_z.cancel_from` is 7 (the tick after the first active frame) so a press on the connect tick is buffered, the slide still hits, then the slash starts. The first two follow-up kicks were lengthened earlier so WWW still lands after the pass (`Z` 1: offset 800, width 900; `Z` 2: offset 650, width 800); whether standing W should stay that long is still Asty's call. Screenshot after `>>WX` in an earlier build: [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+
+## `ZZZ` and the `ZZZ<<>` loop
+
+| Thing | Reference | Tag | Ours |
+|---|---|---|---|
+| Time between kicks | ~10-15 frames | [guess] | cancel window opens at the first recovery tick (8, 8, 9); a buffered press starts the next kick immediately |
+| Later Z during a kick | cancels the current kick's recovery | [seen] | existing `cancel_into` + 8-tick input buffer |
+| Forward step per kick | ~0.25-0.5 CW, to stay glued as the target is pushed | [seen] | Z1 0, Z2/Z3 +0.50 CW, Z4 +0.75 CW (unchanged) |
+| `<<` of `ZZZ<<>` | she instantly faces away, no step | [seen] | `dir_cancel_from` on Z1-Z3; one back press ends the move, faces away, vx = 0 |
+| `>` after `<<` | snaps back to facing the enemy; combo state resets to neutral | [seen] | forward press (or Z/X) restores the original facing and idle, so the next Z is Z1 |
+| Whole `<` `>` twitch | under 10 frames before the next Z | [guess] | 2 ticks in the scripted test; no travel |
+
+The 4th kick is avoided because `<<` cancels Z3 during recovery. `<<` alone is not enough to restart the string facing the enemy; `>` is required (docs/systems/03).
+
+## Body collision
+
+Walking or running into the dummy does **not** move it; the player stops at its box and (if dashing) runs in place. [seen] in the Night Watcher training-room clip. Only attacks displace a monster: a slide's leftover root motion drives the dummy forward so `>>Z` still covers its full distance instead of bouncing off the box.
+
+## Hit-stop
+
+A long freeze on hit, seen in the Night Watcher clip (`eZ3zNo8gbuk`, 0:00-0:30), is **not** a default Rena mechanic. Asty identified it as the Ice Eldrit (Eldrit stone) Freeze proc on the weapon enchant. We do **not** copy that.
+
+We do keep a very short tick-based impact pause: **2 ticks** [ours], tunable per move as `MoveData.hitstop_ticks` in `data/characters/ranger_moves.tres` (default 2). During those ticks the sim still records input, so a buffered cancel starts as soon as the pause ends. This is not `Engine.time_scale`. A longer freeze would be a new enchant or skill later, not a basic-hit rule.
+
+Heavy hits (Z4, X4, `>>ZX`, `>>ZZ`) also pulse a small view-only camera shake (`CameraParams.shake_amplitude`, default 0.08 m). It is not part of the sim.
+
 
 
 ## Arrows (`XXXX`)
@@ -71,12 +97,12 @@ Only a press in the 8-tick buffer before `cancel_from` is kept, and then it star
 ## Footage
 
 
-Clips are reference only. They are not in the repo; they are kept on the build box under `/workspace/gamedev-ref/raw/`.
+Clips are reference only. They are not in the repo; they are kept on the build box under `/workspace/gamedev-ref/raw/` (cuts under `/workspace/gamedev-ref/clips/`). Frame notes below are tagged [seen] when read off a clip and [guess] when estimated from it.
 
 | Video | What it shows | Used for |
 |---|---|---|
 | [Rena (Twilight) Re:Born vs Pre-Re:Born command comparisons](https://www.youtube.com/watch?v=FqgY37BAtX4) (60 fps, on-screen keyboard) | Training room, one command per section, with captions | Main source. `ZZ` at 0:02-0:04 (Twilight, the Night Watcher line): the first press barely moves her, and the later presses move about 25 px each (~0.5 CW) [est]. `>>ZX` ("dzxx") at 0:44-0:56: about 480-500 px from the Z press to the stop, roughly 10 CW in total. That includes closing a ~4 CW gap to the target, so the dash-through itself is about 4-6 CW [est]. Re:Boot caption at 0:56-1:12: "dashes farther behind the enemy". |
-| [Elsword Rena Renewal Night Watcher ALL Combos](https://www.youtube.com/watch?v=eZ3zNo8gbuk) | Training room with the command list open | Confirms the command set. Camera and costume made per-hit measurement unreliable. |
+| [Elsword Rena Renewal Night Watcher ALL Combos](https://www.youtube.com/watch?v=eZ3zNo8gbuk) (cut 0:00-0:30) | Training room with the command list open | Body collision [seen]: she stops against the dummy and runs in place; the dummy is not shoved by walking. A long freeze on hit in this clip is the Ice Eldrit weapon proc, not a default mechanic (Asty, 2026-11-26). |
 | [Rena's (WS·NW) movements and combo instructional videos](https://www.youtube.com/watch?v=AgU7HPZANTo) | Captioned techniques (`→→ZX` around 5:30) in PvP | Qualitative only. |
 | [Basic Rena Combos](https://www.youtube.com/watch?v=hD_QEfmfQvQ), [Rena Basic Combo](https://www.youtube.com/watch?v=jKNvNP8nAYE) | Mixed dungeon combos | Not usable: cuts and moving targets. |
 
@@ -86,5 +112,5 @@ How the footage was measured: phase correlation of the background strip between 
 
 - No frame data or distances for base Rena commands on ElWiki. Every distance above is [obs], [est] or [ours].
 - No clean, single-command footage of base Rena `XXXX` recoil. The per-arrow recoil of `X` 2 and 4 comes from Asty's memory [obs]; only the 3rd-input backflip is documented.
-- A clean `>>Z` slide on its own. In the Twilight `dzx` section (0:45.37-0:45.47) X follows Z after only 6 frames, so the slide cannot be separated from the dash-through. The ~1.9 CW slide is our choice until a `>>ZZ` clip is measured.
+- A clean `>>Z` slide on its own. In the Twilight `dzx` section (0:45.37-0:45.47) X follows Z after only 6 frames, so the slide cannot be separated from the dash-through. Footage of similar slides is ~1.5-2 CW [guess]; ours is 3.80 CW [ours] because Asty asked for it to go much further.
 - Night Watcher's exact `>>ZX` distance. The Twilight clip shows the same command line, but on a later job.
