@@ -222,3 +222,30 @@ func test_arrow_overlapping_two_targets_hits_the_lower_id() -> void:
 	var joined: String = "\n".join(lines)
 	assert_string_contains(joined, ":hit:1:2:ranger_x1:", "both touched at once: the lower id is hit")
 	assert_false(joined.contains(":hit:1:3:"), "one target per arrow")
+
+
+func test_arrow_expires_around_seven_metres() -> void:
+	# [ours] lifetime 17 ticks at 400 sub/tick from a spawn 400 in front: the
+	# arrow disappears 7.2 m from the ranger and must not still be in flight at 12 m.
+	var shot: ProjectileData = (load(SimSetup.RANGER) as CharacterData).moveset.moves[4].projectiles[0]
+	assert_eq(shot.speed, 400)
+	assert_eq(shot.lifetime_ticks, 17)
+	var range_sub: int = shot.offset_x + shot.speed * shot.lifetime_ticks
+	assert_between(float(range_sub) / 1000.0, 6.0, 7.5, "range is %.2f m (target ~6.8 m)" % (float(range_sub) / 1000.0))
+	var world: SimWorld = _arrow_world(12000)
+	_press_x_then_wait(world, 40)
+	assert_eq(world.projectiles.size(), 0, "the arrow is gone before 12 m")
+	assert_eq(world.fighters[1].combo, 0, "a dummy 12 m away is not hit")
+
+
+func test_mashing_x_cannot_start_the_next_arrow_before_cancel_from() -> void:
+	# cancel_from is 16 on x1; mashing every tick must still wait that long.
+	var world: SimWorld = SimSetup.create(&"training", 1)
+	var x2_tick: int = -1
+	for tick: int in 40:
+		# A new press every tick (mash), not a hold.
+		world.step([InputFrame.new(0, X, X, 0)] as Array[InputFrame])
+		for event: SimEvent in world.events:
+			if event.type == &"move_start" and event.move_id == &"ranger_x2":
+				x2_tick = event.tick
+	assert_eq(x2_tick, 16, "x2 starts at x1.cancel_from, not earlier, even when X is mashed")
