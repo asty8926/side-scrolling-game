@@ -180,3 +180,20 @@ func test_a_platform_moved_away_drops_its_fighter_from_the_old_height() -> void:
 	assert_eq(world.replace_static(room, world.movement, world.input_settings), [] as Array[String])
 	assert_eq(fighter.ground, SimFighter.IN_AIR, "no longer supported")
 	assert_eq(fighter.y, old_y, "falls from where it was")
+
+
+func test_camera_params_at_the_wrong_path_are_refused() -> void:
+	# A valid CameraParams file must not replace the camera unless it is the
+	# path the camera is already using (e.g. a room .tres overwritten by mistake).
+	var path: String = DIR + "/wrong_camera.tres"
+	var fresh: CameraParams = CameraParams.new()
+	assert_eq(ResourceSaver.save(fresh, path), OK)
+	var camera: SideCamera = SideCamera.new()
+	add_child_autofree(camera)
+	camera.params = CameraParams.new()
+	_reloader.camera = camera
+	var problems: Array[String] = _reloader.reload_path(path)
+	assert_gt(problems.size(), 0)
+	assert_string_contains(problems[0], "not used by the running world")
+	assert_push_error_count(1)
+	DirAccess.remove_absolute(path)

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
 [ext_resource type="Script" path="res://game/input/input_hint.gd" id="2_hint"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://game/debug/data_reloader.gd" id="8_reloader"]
 [ext_resource type="Script" path="res://game/debug/reload_toast.gd" id="9_toast"]
 [ext_resource type="Script" path="res://game/debug/debug_overlay.gd" id="10_overlay"]
+[ext_resource type="Resource" path="res://data/view/side_camera.tres" id="11_cam"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
 sky_top_color = Color(0.32, 0.55, 0.85, 1)
@@ -37,9 +38,10 @@ setup = &"training"
 [node name="ReplayRecorder" type="Node" parent="SimDriver"]
 script = ExtResource("3_rec")
 
-[node name="DataReloader" type="Node" parent="SimDriver" node_paths=PackedStringArray("room_view")]
+[node name="DataReloader" type="Node" parent="SimDriver" node_paths=PackedStringArray("room_view", "camera")]
 script = ExtResource("8_reloader")
 room_view = NodePath("../../RoomView")
+camera = NodePath("../../SideCamera")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("environment")
@@ -52,6 +54,7 @@ shadow_enabled = true
 [node name="RoomView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
 script = ExtResource("4_room")
 driver = NodePath("../SimDriver")
+params = ExtResource("11_cam")
 
 [node name="FighterView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
 script = ExtResource("5_fighter")
@@ -69,13 +72,13 @@ nose_color = Color(0.3, 0.3, 0.32, 1)
 script = ExtResource("8_arrows")
 driver = NodePath("../SimDriver")
 
-[node name="SideCamera" type="Camera3D" parent="." node_paths=PackedStringArray("target", "driver")]
+[node name="SideCamera" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 2.2, 11)
 current = true
 fov = 50.0
 script = ExtResource("6_camera")
 target = NodePath("../FighterView")
-driver = NodePath("../SimDriver")
+params = ExtResource("11_cam")
 
 [node name="Hud" type="CanvasLayer" parent="."]
 

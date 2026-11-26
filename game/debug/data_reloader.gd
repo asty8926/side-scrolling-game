@@ -3,7 +3,8 @@ extends Node
 ## Debug builds only: hot reload of the game data the sim uses.
 ##
 ## Twice a second it checks the content (MD5) of every .tres the world
-## was built from (characters, move sets, movement, room, input settings).
+## was built from (characters, move sets, movement, room, input settings)
+## and, when assigned, the camera params file (view only).
 ## A changed file is loaded fresh, validated, and swapped into the parent
 ## SimDriver's world between two ticks (this runs in _process, never inside
 ## a sim step). Invalid data keeps the previous values: the problems are
@@ -17,8 +18,10 @@ signal reloaded(path: String, problems: Array[String])
 @export_range(0.1, 5.0, 0.1, "suffix:s") var poll_interval: float = 0.5
 ## Off in release exports regardless of this flag.
 @export var enabled: bool = true
-## Redrawn after a room or movement reload (the platforms may have moved).
+## Redrawn after a room, movement, or camera-params reload.
 @export var room_view: RoomView
+## View camera; its CameraParams file is watched and applied on reload.
+@export var camera: SideCamera
 
 var _driver: SimDriver
 ## Content fingerprints: file modification times only have 1 s precision,
@@ -56,6 +59,8 @@ func watched_paths() -> Array[String]:
 	for data: CharacterData in world.characters:
 		_add_path(paths, data)
 		_add_path(paths, data.moveset)
+	if camera != null:
+		_add_path(paths, camera.params)
 	return paths
 
 
@@ -85,7 +90,7 @@ func reload_path(path: String) -> Array[String]:
 		# when the path is unchanged, so clear it first.
 		fresh.resource_path = ""
 		fresh.take_over_path(path)
-		if (fresh is RoomLayout or fresh is MovementParams) and room_view != null:
+		if (fresh is RoomLayout or fresh is MovementParams or fresh is CameraParams) and room_view != null:
 			room_view.build(_driver.world.room, _driver.world.tier_height)
 		print("DataReloader: reloaded %s" % path)
 	else:
@@ -97,6 +102,21 @@ func reload_path(path: String) -> Array[String]:
 func _apply(path: String, fresh: Resource) -> Array[String]:
 	var world: SimWorld = _driver.world
 	var problems: Array[String] = []
+	var camera_path: String = camera.params.resource_path if camera != null and camera.params != null else ""
+	if fresh is CameraParams:
+		if path != camera_path or camera_path == "":
+			# A CameraParams file at some other watched path (e.g. a room
+			# .tres overwritten by mistake) must not replace the camera.
+			problems.append("%s is not used by the running world" % path)
+			return problems
+		var cam_problems: Array[String] = (fresh as CameraParams).validate()
+		if not cam_problems.is_empty():
+			return cam_problems
+		camera.params = fresh as CameraParams
+		camera.apply_params()
+		if room_view != null:
+			room_view.params = fresh as CameraParams
+		return []
 	if fresh is RoomLayout:
 		return world.replace_static(fresh as RoomLayout, world.movement, world.input_settings)
 	if fresh is MovementParams:
