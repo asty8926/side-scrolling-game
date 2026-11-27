@@ -100,8 +100,10 @@ func _refresh() -> void:
 	else:
 		_hp_fill.color = Color(0.30, 0.78, 0.45)
 	_hp_label.text = "HP  %d / %d" % [fighter.hp, max_hp]
-	if fighter.combo >= 2:
-		_combo_label.text = "COMBO  %d" % fighter.combo
+	# Combo counts received hits, so the dummy holds the training combo, not the player.
+	var combo: int = _target_combo(driver.world)
+	if combo >= 2:
+		_combo_label.text = "COMBO  %d" % combo
 		_combo_label.visible = true
 	else:
 		_combo_label.visible = false
@@ -111,3 +113,11 @@ static func _max_hp(world: SimWorld, fighter: SimFighter) -> int:
 	if fighter.character >= 0 and fighter.character < world.characters.size():
 		return world.characters[fighter.character].max_hp
 	return maxi(fighter.hp, 1)
+
+
+static func _target_combo(world: SimWorld) -> int:
+	var best: int = 0
+	for fighter: SimFighter in world.fighters:
+		if fighter.player == SimFighter.NO_PLAYER:
+			best = maxi(best, fighter.combo)
+	return best
