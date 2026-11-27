@@ -27,6 +27,10 @@ var _body: Node3D
 var _hit_meshes: Array[MeshInstance3D] = []
 var _hit_material: StandardMaterial3D
 var _readout: Label3D
+var _body_material: StandardMaterial3D
+var _shadow: MeshInstance3D
+var _flash: float = 0.0
+var _flinch: float = 0.0
 
 
 func _ready() -> void:
@@ -40,6 +44,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	_update_feel(delta)
 	if not _has_state:
 		return
 	var fraction: float = Engine.get_physics_interpolation_fraction()
@@ -49,6 +54,7 @@ func _process(delta: float) -> void:
 		_body.rotation.y = target_yaw
 	else:
 		_body.rotation.y = lerp_angle(_body.rotation.y, target_yaw, clampf(delta / turn_time, 0.0, 1.0))
+	_place_shadow()
 
 
 ## Height of the placeholder in meters (the camera aims at its middle).
@@ -56,6 +62,17 @@ func body_height() -> float:
 	if driver != null and driver.world.movement != null:
 		return SimUnits.to_meters(driver.world.movement.height)
 	return 1.4
+
+
+## View-only hit flash, 1 at the moment of impact, decaying to 0.
+func flash_amount() -> float:
+	return _flash
+
+
+## Triggers the flash / flinch used on a received hit (also used by tests).
+func notify_hit() -> void:
+	_flash = 1.0
+	_flinch = 1.0
 
 
 func _on_ticked(_tick: int) -> void:
@@ -76,6 +93,7 @@ func _read_state(snap: bool) -> void:
 	_show_hitboxes(fighter)
 	if _readout != null:
 		_readout.text = readout_text(fighter)
+	_consume_hit_events(fighter)
 	if not _has_state:
 		position = position_now
 		_body.rotation.y = 0.0 if _facing == SimFighter.RIGHT else PI
@@ -88,10 +106,11 @@ func _build_placeholder() -> void:
 	_body = Node3D.new()
 	_body.name = "Body"
 	add_child(_body)
+	_body_material = _material(body_color)
 	var capsule: CapsuleMesh = CapsuleMesh.new()
 	capsule.height = height
 	capsule.radius = minf(0.3, height * 0.25)
-	capsule.material = _material(body_color)
+	capsule.material = _body_material
 	var capsule_instance: MeshInstance3D = MeshInstance3D.new()
 	capsule_instance.name = "Capsule"
 	capsule_instance.mesh = capsule
@@ -116,6 +135,23 @@ func _build_placeholder() -> void:
 		_readout.outline_size = 12
 		_readout.position = Vector3(0.0, height + 1.2, 0.0)
 		add_child(_readout)
+	_shadow = MeshInstance3D.new()
+	_shadow.name = "GroundShadow"
+	var blob: CylinderMesh = CylinderMesh.new()
+	blob.top_radius = 0.42
+	blob.bottom_radius = 0.42
+	blob.height = 0.03
+	blob.rings = 1
+	blob.radial_segments = 16
+	var shadow_mat: StandardMaterial3D = StandardMaterial3D.new()
+	shadow_mat.albedo_color = Color(0.02, 0.02, 0.03, 0.4)
+	shadow_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	shadow_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shadow_mat.disable_receive_shadows = true
+	blob.material = shadow_mat
+	_shadow.mesh = blob
+	_shadow.position = Vector3(0.0, 0.016, 0.0)
+	add_child(_shadow)
 
 
 ## The above-head text for `fighter` (public for tests).
@@ -170,3 +206,38 @@ static func _material(color: Color) -> StandardMaterial3D:
 	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = color
 	return material
+
+
+func _consume_hit_events(fighter: SimFighter) -> void:
+	if driver == null:
+		return
+	for event: SimEvent in driver.world.events:
+		if event.type == &"hit" and event.target == fighter.id:
+			notify_hit()
+
+
+func _update_feel(delta: float) -> void:
+	if _body == null:
+		return
+	if _flash > 0.0:
+		_flash = maxf(0.0, _flash - delta * 7.0)
+	if _flinch > 0.0:
+		_flinch = maxf(0.0, _flinch - delta * 9.0)
+	if _body_material != null:
+		_body_material.albedo_color = body_color.lerp(Color(1.0, 0.92, 0.78), _flash)
+		_body_material.emission_enabled = _flash > 0.04
+		_body_material.emission = Color(1.0, 0.82, 0.5) * _flash
+		_body_material.emission_energy_multiplier = 1.6 * _flash
+	_body.rotation.z = sin(_flinch * PI) * 0.18 * -float(_facing if _facing != 0 else 1)
+	var squash: float = _flinch * 0.1
+	_body.scale = Vector3(1.0 + squash, 1.0 - squash, 1.0 + squash)
+
+
+func _place_shadow() -> void:
+	if _shadow == null:
+		return
+	# Stay on the floor when the capsule jumps; shrink a little with height.
+	_shadow.position.y = 0.016 - position.y
+	var shrink: float = clampf(1.0 - position.y * 0.18, 0.35, 1.0)
+	_shadow.scale = Vector3(shrink, 1.0, shrink * 0.7)
+

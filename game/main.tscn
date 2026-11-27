@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://ct4vh1ogesovc"]
+[gd_scene load_steps=19 format=3 uid="uid://ct4vh1ogesovc"]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
 [ext_resource type="Script" uid="uid://dmgaipp6eaeby" path="res://game/input/input_hint.gd" id="2_hint"]
@@ -12,6 +12,8 @@
 [ext_resource type="Script" uid="uid://dfoeid4crkw8v" path="res://game/debug/reload_toast.gd" id="9_toast"]
 [ext_resource type="Script" uid="uid://dk4ukrdk64mho" path="res://game/debug/debug_overlay.gd" id="10_overlay"]
 [ext_resource type="Script" uid="uid://cdd5twjj3h8np" path="res://game/view/display_mode.gd" id="12_display"]
+[ext_resource type="Script" uid="uid://culjax8cyho0f" path="res://game/view/combat_fx.gd" id="13_fx"]
+[ext_resource type="Script" uid="uid://dn4v6yt64n3qk" path="res://game/view/training_hud.gd" id="14_hud"]
 [ext_resource type="Resource" uid="uid://ca3pskopkg48x" path="res://data/view/side_camera.tres" id="11_cam"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
@@ -27,8 +29,14 @@ sky_material = SubResource("sky_material")
 background_mode = 2
 sky = SubResource("sky")
 ambient_light_source = 3
-ambient_light_energy = 0.4
+ambient_light_energy = 0.55
 tonemap_mode = 3
+fog_enabled = true
+fog_light_color = Color(0.62, 0.68, 0.72, 1)
+fog_sun_scatter = 0.12
+fog_density = 0.0028
+fog_aerial_perspective = 0.35
+fog_sky_affect = 0.25
 
 [node name="Main" type="Node3D"]
 
@@ -49,8 +57,17 @@ environment = SubResource("environment")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 10, 6)
-light_energy = 0.8
+light_color = Color(1, 0.96, 0.88, 1)
+light_energy = 1.05
 shadow_enabled = true
+light_angular_distance = 0.4
+directional_shadow_max_distance = 40.0
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.707107, -0.353553, 0.612372, 0, 0.866025, 0.5, -0.707107, 0.353553, -0.612372, 0, 8, -4)
+light_color = Color(0.62, 0.74, 0.95, 1)
+light_energy = 0.28
+shadow_enabled = false
 
 [node name="RoomView" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
 script = ExtResource("4_room")
@@ -73,6 +90,10 @@ nose_color = Color(0.3, 0.3, 0.32, 1)
 script = ExtResource("8_arrows")
 driver = NodePath("../SimDriver")
 
+[node name="CombatFx" type="Node3D" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("13_fx")
+driver = NodePath("../SimDriver")
+
 [node name="SideCamera" type="Camera3D" parent="." node_paths=PackedStringArray("target", "driver")]
 transform = Transform3D(1, 0, 0, 0, 0.994522, 0.104528, 0, -0.104528, 0.994522, 0, 2.2, 11)
 current = true
@@ -82,15 +103,18 @@ target = NodePath("../FighterView")
 params = ExtResource("11_cam")
 driver = NodePath("../SimDriver")
 
-[node name="Hud" type="CanvasLayer" parent="."]
+[node name="Hud" type="CanvasLayer" parent="." node_paths=PackedStringArray("driver")]
+script = ExtResource("14_hud")
+driver = NodePath("../SimDriver")
 
 [node name="Title" type="Label" parent="Hud"]
 offset_left = 20.0
-offset_top = 16.0
+offset_top = 12.0
 offset_right = 640.0
-offset_bottom = 56.0
-theme_override_font_sizes/font_size = 24
-text = "side-scrolling-game M0 - test room"
+offset_bottom = 52.0
+theme_override_colors/font_color = Color(0.93, 0.9, 0.82, 1)
+theme_override_font_sizes/font_size = 28
+text = "Training Room"
 
 [node name="InputHint" type="Label" parent="Hud"]
 anchors_preset = 12
