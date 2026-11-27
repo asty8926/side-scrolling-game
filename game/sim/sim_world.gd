@@ -278,7 +278,7 @@ func step(inputs: Array[InputFrame]) -> void:
 			var history: InputHistory = histories[fighter.player] if fighter.player >= 0 and fighter.player < histories.size() else empty_history
 			var move: MoveData = SimCombat.current_move(self, fighter)
 			if move != null:
-				SimCombat.try_dash_cancel(self, fighter, history, move)
+				SimCombat.try_dash_cancel(self, fighter, history, move, false)
 			var window: int = input_settings.double_tap_window_ticks
 			var attacking: bool = fighter.is_in_move() or fighter.is_in_hitstun()
 			var held: int = 0 if attacking else history.held_now()

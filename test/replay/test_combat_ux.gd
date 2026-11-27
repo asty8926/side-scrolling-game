@@ -284,11 +284,23 @@ func test_dash_wx_hits_two_dummies_along_the_path() -> void:
 	previous = _held(world, previous, R)
 	previous = _held(world, previous, R | Z)
 	previous = _held(world, previous, 0)
+	var slash_hits: Dictionary[int, int] = {}
 	previous = _held(world, previous, X)
+	for event: SimEvent in world.events:
+		if event.type == &"hit" and event.move_id == &"ranger_dash_zx":
+			slash_hits[event.target] = slash_hits.get(event.target, 0) + 1
 	for _i: int in 50:
 		previous = _held(world, previous, 0)
+		for event: SimEvent in world.events:
+			if event.type == &"hit" and event.move_id == &"ranger_dash_zx":
+				slash_hits[event.target] = slash_hits.get(event.target, 0) + 1
+	# Also catch a hit on the cancel tick itself, before the loop.
 	assert_gte(world.fighters[1].combo, 1, "the near dummy is hit")
 	assert_gte(dummy2.combo, 1, "the far dummy is also hit once along the dash")
+	var near_slash: int = slash_hits[world.fighters[1].id] if slash_hits.has(world.fighters[1].id) else 0
+	var far_slash: int = slash_hits[dummy2.id] if slash_hits.has(dummy2.id) else 0
+	assert_eq(near_slash, 1, "near dummy takes exactly one slash hit, got %d" % near_slash)
+	assert_eq(far_slash, 1, "far dummy takes exactly one slash hit, got %d" % far_slash)
 
 
 func test_dash_w_chains_from_recovery_with_no_idle_gap() -> void:

@@ -518,18 +518,24 @@ static func _apply_hitstop(attacker: SimFighter, target: SimFighter, move: MoveD
 ## A double-tap of ← or → during recovery ends the move so movement can
 ## start a dash on this same tick. The opposite press then cancels that dash
 ## (`<<>`). A single back press does not lock the fighter in place.
-static func try_dash_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData) -> bool:
+static func try_dash_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData, apply_pass: bool = true) -> bool:
 	if f.move_tick < move.startup + move.active:
 		return false
 	var window: int = world.input_settings.double_tap_window_ticks
 	if not history.double_tap(InputFrame.RIGHT, window) and not history.double_tap(InputFrame.LEFT, window):
 		return false
-	_finish_pass(world, f)
-	if move.turn_at_end:
-		_face_hit_targets(world, f)
+	# During hit-stop we still end the move, but we must not move x. The
+	# snap to the far side runs on the next live cancel (root motion already
+	# covers the new long slash; this is only a safety).
+	if apply_pass:
+		_finish_pass(world, f)
+		if move.turn_at_end:
+			_face_hit_targets(world, f)
+	# Keep the input buffer alive so a Z / X pressed on a frozen tick still
+	# starts after the pause (`buffer` is mini(buffer_ticks, idle_ticks)).
 	f.move = SimFighter.NO_MOVE
 	f.move_tick = 0
-	f.idle_ticks = 0
+	f.idle_ticks = world.input_settings.buffer_ticks
 	f.hit_keys.clear()
 	f.dash_dir = 0
 	f.dash_attack_ticks = 0
