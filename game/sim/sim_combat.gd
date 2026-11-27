@@ -53,8 +53,8 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 		f.hit_keys.clear()
 		move = null
 	if move != null:
-		# A new `>>` / `<<` during recovery starts a run and a possible new
-		# dash attack, and beats cancel_into (so `>>W` `>>W` is a new slide,
+		# A new `>>` / `<<` during recovery queues a run (and a possible new
+		# dash attack) and beats cancel_into (so `>>W` `>>W` is a new slide,
 		# not the follow-up `>>ZZ`).
 		if try_dash_cancel(world, f, history, move):
 			move = null
@@ -79,6 +79,9 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	if not f.is_grounded():
 		_age_dash_attack_window(f)
 		return  # air commands are M1
+	# A same-tick `>` + Z during a queued recovery `<<` must flip in place
+	# first; otherwise `_dash_command_dir` would start a slide the other way.
+	_resolve_queued_turn(world, f, history)
 	# Dash attacks: currently running, the run key just released (linger), or
 	# the second tap of `>>` / `<<` on this tick (combat runs before movement
 	# starts the dash, so a same-tick Z would otherwise become a standing kick).
@@ -108,6 +111,8 @@ static func _start(world: SimWorld, f: SimFighter, index: int) -> void:
 	f.dash_dir = 0
 	f.dash_attack_ticks = 0
 	f.dir_cancel_facing = 0
+	f.queued_dash_dir = 0
+	f.queued_dash_ticks = 0
 	f.vx = 0
 	var move: MoveData = current_move(world, f)
 	world.emit_event(&"move_start", f.id, 0, move.id)
@@ -500,6 +505,8 @@ static func _take_hit(world: SimWorld, dir: int, target: SimFighter, move: MoveD
 	target.dash_dir = 0
 	target.dash_attack_ticks = 0
 	target.dir_cancel_facing = 0
+	target.queued_dash_dir = 0
+	target.queued_dash_ticks = 0
 	var m: MovementParams = world.movement
 	target.x = clampi(target.x + move.pushback * dir, world.room.left + m.half_width, world.room.right - m.half_width)
 
@@ -515,14 +522,20 @@ static func _apply_hitstop(attacker: SimFighter, target: SimFighter, move: MoveD
 		target.hitstop = maxi(target.hitstop, move.hitstop_ticks)
 
 
-## A double-tap of ← or → during recovery ends the move so movement can
-## start a dash on this same tick. The opposite press then cancels that dash
-## (`<<>`). A single back press does not lock the fighter in place.
+## A double-tap of ← or → during recovery ends the move and queues a run.
+## The run does not start moving until `dash_confirm_ticks` expire while the
+## direction is still held. A quick opposite press (`<<>`) flips facing in
+## place with no step. A same-tick Z still starts a slide (`>>W`).
 static func try_dash_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData, apply_pass: bool = true) -> bool:
 	if f.move_tick < move.startup + move.active:
 		return false
 	var window: int = world.input_settings.double_tap_window_ticks
-	if not history.double_tap(InputFrame.RIGHT, window) and not history.double_tap(InputFrame.LEFT, window):
+	var queued: int = 0
+	if history.double_tap(InputFrame.RIGHT, window):
+		queued = SimFighter.RIGHT
+	elif history.double_tap(InputFrame.LEFT, window):
+		queued = SimFighter.LEFT
+	else:
 		return false
 	# During hit-stop we still end the move, but we must not move x. The
 	# snap to the far side runs on the next live cancel (root motion already
@@ -538,8 +551,11 @@ static func try_dash_cancel(world: SimWorld, f: SimFighter, history: InputHistor
 	f.idle_ticks = world.input_settings.buffer_ticks
 	f.hit_keys.clear()
 	f.dash_dir = 0
-	f.dash_attack_ticks = 0
+	f.dash_attack_ticks = world.input_settings.dash_attack_linger_ticks
 	f.dir_cancel_facing = 0
+	f.queued_dash_dir = queued
+	f.queued_dash_ticks = world.input_settings.dash_confirm_ticks
+	f.facing = queued
 	f.vx = 0
 	world.emit_event(&"dash_cancel", f.id)
 	return true
@@ -560,11 +576,32 @@ static func _age_dash_attack_window(f: SimFighter) -> void:
 		f.dash_attack_ticks -= 1
 
 
+
+## If a recovery run is queued and the opposite direction is pressed this tick,
+## flip facing in place and drop the queue so the following Z/X is a standing hit.
+static func _resolve_queued_turn(world: SimWorld, f: SimFighter, history: InputHistory) -> void:
+	if f.queued_dash_ticks <= 0 or f.queued_dash_dir == 0:
+		return
+	var against: int = InputFrame.LEFT if f.queued_dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+	if (history.pressed_ago(0) & against) == 0:
+		return
+	f.facing = -f.queued_dash_dir
+	f.queued_dash_dir = 0
+	f.queued_dash_ticks = 0
+	f.dash_dir = 0
+	f.dash_attack_ticks = 0
+	f.lock_x_this_tick = true
+	world.emit_event(&"turn_cancel", f.id)
+
 ## Facing used for a dash attack this tick: an active run, a just-released run
 ## still inside the linger window, or a `>>` / `<<` whose second tap is now.
 static func _dash_command_dir(world: SimWorld, f: SimFighter, history: InputHistory) -> int:
+	if f.lock_x_this_tick:
+		return 0
 	if f.dash_dir != 0:
 		return f.dash_dir
+	if f.queued_dash_dir != 0:
+		return f.queued_dash_dir
 	if f.dash_attack_ticks > 0:
 		return f.facing
 	var window: int = world.input_settings.double_tap_window_ticks

@@ -4,8 +4,10 @@ extends RefCounted
 ## Movement). Pure integer rules, one call per fighter per tick:
 ##
 ## - Hold ← / → to walk; double tap (`>>` / `<<`) to dash that way and face it.
+## - A double-tap during attack recovery queues the run and delays its start
+##   so a quick opposite press (`<<>`) flips facing in place with no step.
 ## - While dashing, a single press of the opposite direction stops the dash and
-##   turns around with zero speed on that tick (the `<<>` reverse of `ZZZ<<>`).
+##   turns around with zero speed on that tick.
 ## - Releasing the dash direction on the ground stops the dash.
 ## - ↑ jumps (buffered, so a press just before landing still jumps); ↑ in the
 ##   air is the double jump. Jumping while dashing keeps dash speed (dash jump).
@@ -30,8 +32,9 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var reversed: bool = apply_dash_intent(world, f, history, attacking, pressed, dir, window)
 
 	# Horizontal speed.
-	if reversed:
+	if reversed or f.lock_x_this_tick:
 		f.vx = 0
+		f.lock_x_this_tick = false
 	elif f.dash_dir != 0:
 		f.vx = f.dash_dir * m.dash_speed
 	else:
@@ -105,21 +108,29 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		f.y = new_y
 
 
-## Updates dash_dir and facing only. Also used during hit-stop so a `>` or a
-## second tap pressed while frozen still counts (Asty: a double-tap always
-## starts a run; the opposite press cancels it the frame it is pressed).
+## Updates dash_dir, facing, and the recovery-dash queue. Also used during
+## hit-stop so a `>` or a second tap pressed while frozen still counts, but
+## x does not move until the pause ends.
 static func apply_dash_intent(world: SimWorld, f: SimFighter, history: InputHistory, attacking: bool, pressed: int, dir: int, window: int) -> bool:
+	var queue: int = _advance_dash_queue(world, f, pressed, dir)
+	# 1 = still queued, turned in place, or expired unheld: no x movement.
+	# 2 = the queued run just started: dash_dir is set, use dash speed.
+	if queue == 1:
+		return true
+	if queue == 2:
+		return false
 	var started: int = 0
 	var reverse_press: bool = false
 	if f.dash_dir != 0:
 		var against: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
 		reverse_press = (pressed & against) != 0
 	# An opposite press during a dash is always the reverse (below), even when it
-	# also completes a double tap.
-	if not reverse_press and not attacking:
-		if history.double_tap(InputFrame.RIGHT, window):
+	# also completes a double tap. A recovery double-tap is queued in
+	# try_dash_cancel; idle double-taps start the run on the second-tap tick.
+	if not reverse_press and not attacking and f.queued_dash_ticks == 0 and not f.lock_x_this_tick:
+		if history.double_tap(InputFrame.RIGHT, window) and (pressed & InputFrame.RIGHT) != 0:
 			started = SimFighter.RIGHT
-		elif history.double_tap(InputFrame.LEFT, window):
+		elif history.double_tap(InputFrame.LEFT, window) and (pressed & InputFrame.LEFT) != 0:
 			started = SimFighter.LEFT
 	var reversed: bool = false
 	if started != 0:
@@ -138,3 +149,32 @@ static func apply_dash_intent(world: SimWorld, f: SimFighter, history: InputHist
 			f.dash_attack_ticks = world.input_settings.dash_attack_linger_ticks
 			world.emit_event(&"dash_stop", f.id)
 	return reversed
+
+
+## Counts down a recovery-queued dash. 0 = no queue, 1 = hold x still this
+## tick, 2 = the run just started (apply dash speed).
+static func _advance_dash_queue(world: SimWorld, f: SimFighter, pressed: int, dir: int) -> int:
+	if f.queued_dash_ticks <= 0:
+		return 0
+	var against: int = InputFrame.LEFT if f.queued_dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+	if (pressed & against) != 0:
+		f.facing = -f.queued_dash_dir
+		f.queued_dash_dir = 0
+		f.queued_dash_ticks = 0
+		f.dash_dir = 0
+		f.dash_attack_ticks = 0
+		world.emit_event(&"turn_cancel", f.id)
+		return 1
+	f.queued_dash_ticks -= 1
+	if f.queued_dash_ticks <= 0:
+		if dir == f.queued_dash_dir and f.queued_dash_dir != 0:
+			f.dash_dir = f.queued_dash_dir
+			f.facing = f.queued_dash_dir
+			world.emit_event(&"dash", f.id)
+			f.queued_dash_dir = 0
+			f.queued_dash_ticks = 0
+			return 2
+		f.queued_dash_dir = 0
+		f.queued_dash_ticks = 0
+		f.dash_attack_ticks = 0
+	return 1

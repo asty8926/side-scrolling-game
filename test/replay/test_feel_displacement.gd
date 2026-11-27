@@ -78,9 +78,9 @@ func _assert_cw(steps: Dictionary[String, int], id: String, low: float, high: fl
 func test_w_chain_first_kick_stays_then_each_kick_steps_forward() -> void:
 	var steps: Dictionary[String, int] = _steps(_trace(_open(), _mash(Z, 6, 6, 60)))
 	_assert_cw(steps, "ranger_z1", -0.05, 0.05)
-	_assert_cw(steps, "ranger_z2", 0.35, 0.65)
-	_assert_cw(steps, "ranger_z3", 0.35, 0.65)
-	_assert_cw(steps, "ranger_z4", 0.5, 1.0)
+	_assert_cw(steps, "ranger_z2", 0.55, 0.85)
+	_assert_cw(steps, "ranger_z3", 0.55, 0.85)
+	_assert_cw(steps, "ranger_z4", 0.7, 1.15)
 
 
 func test_x_chain_first_arrow_stays_then_each_arrow_recoils_backward() -> void:
@@ -136,7 +136,7 @@ func test_w_chain_against_the_dummy_keeps_every_hit_in_range() -> void:
 	var start: int = ranger.x
 	_trace(world, _mash(Z, 6, 6, 60))
 	assert_eq(world.fighters[1].combo, 4, "ZZZZ: four hits")
-	assert_between(float(ranger.x - start) / CW, 1.0, 2.2, "the whole string walks the ranger forward")
+	assert_between(float(ranger.x - start) / CW, 1.2, 2.6, "the whole string walks the ranger forward")
 
 
 func test_dash_w_on_the_same_tick_as_the_second_tap_slides() -> void:

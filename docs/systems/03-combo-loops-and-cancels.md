@@ -56,7 +56,7 @@ A cycle therefore looks like: ground loop (`ZZZ<<>` x N) → launcher → air st
 
 This loop is the **#1 feel test** for the whole project. If it doesn't feel crisp, M1 is not done.
 
-Recovery of any grounded move (kicks, arrows, the slide and the slash) can be cancelled by a double-tap `<<` / `>>`, which always starts a run in that direction. The opposite press the frame it is pressed cancels that run and flicks facing (`<<>`), so the next Z or X is the first hit of the string. Scripted and keyboard-path tests cover `ZZZ<<>Z`, `XXX<<>X`, mixed chains, and `WWW<<>WWW<<` ending in a left run. The KD-cap, knockdown, and x5-loop checks below stay open for M1.
+Recovery of any grounded move (kicks, arrows, the slide and the slash) can be cancelled by a double-tap `<<` / `>>`, which queues a run and delays its physical start for `dash_confirm_ticks` (10). A quick opposite press inside that window (`<<>`) flips facing in place with no step, so the next Z or X is the first hit of the string. If the second tap is held until the window expires, the run starts (so `WWW<<>WWW<<` still ends running left). Idle double-taps still start the run immediately. Scripted and keyboard-path tests cover `ZZZ<<>Z`, `XXX<<>X`, mixed chains, in-place `WWW<<>`, and `WWW<<>WWW<<` ending in a left run. The KD-cap, knockdown, and x5-loop checks below stay open for M1.
 
 ## What our version must do (acceptance criteria)
 
