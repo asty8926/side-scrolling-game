@@ -79,6 +79,9 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 	if not f.is_grounded():
 		_age_dash_attack_window(f)
 		return  # air commands are M1
+	# A same-tick `>` + Z during a queued recovery `<<` must flip in place
+	# first; otherwise `_dash_command_dir` would start a slide the other way.
+	_resolve_queued_turn(world, f, history)
 	# Dash attacks: currently running, the run key just released (linger), or
 	# the second tap of `>>` / `<<` on this tick (combat runs before movement
 	# starts the dash, so a same-tick Z would otherwise become a standing kick).
@@ -572,6 +575,23 @@ static func _age_dash_attack_window(f: SimFighter) -> void:
 	if f.dash_dir == 0 and f.dash_attack_ticks > 0:
 		f.dash_attack_ticks -= 1
 
+
+
+## If a recovery run is queued and the opposite direction is pressed this tick,
+## flip facing in place and drop the queue so the following Z/X is a standing hit.
+static func _resolve_queued_turn(world: SimWorld, f: SimFighter, history: InputHistory) -> void:
+	if f.queued_dash_ticks <= 0 or f.queued_dash_dir == 0:
+		return
+	var against: int = InputFrame.LEFT if f.queued_dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+	if (history.pressed_ago(0) & against) == 0:
+		return
+	f.facing = -f.queued_dash_dir
+	f.queued_dash_dir = 0
+	f.queued_dash_ticks = 0
+	f.dash_dir = 0
+	f.dash_attack_ticks = 0
+	f.lock_x_this_tick = true
+	world.emit_event(&"turn_cancel", f.id)
 
 ## Facing used for a dash attack this tick: an active run, a just-released run
 ## still inside the linger window, or a `>>` / `<<` whose second tap is now.

@@ -32,8 +32,9 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var reversed: bool = apply_dash_intent(world, f, history, attacking, pressed, dir, window)
 
 	# Horizontal speed.
-	if reversed:
+	if reversed or f.lock_x_this_tick:
 		f.vx = 0
+		f.lock_x_this_tick = false
 	elif f.dash_dir != 0:
 		f.vx = f.dash_dir * m.dash_speed
 	else:

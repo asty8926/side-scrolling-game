@@ -75,6 +75,9 @@ var queued_dash_ticks: int = 0
 ## Transient, not in snapshots: whether this tick started in hitstun (set by
 ## SimCombat.apply_motion before any hit of the tick, so it is never stale).
 var stunned_this_tick: bool = false
+## Transient, not in snapshots: begin_tick already resolved an in-place
+## `<<>` this tick, so movement must not walk on the opposite press.
+var lock_x_this_tick: bool = false
 
 const FIELD_COUNT: int = 26
 ## Most hits one move can record (hitboxes x targets).

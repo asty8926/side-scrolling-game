@@ -171,6 +171,36 @@ func test_www_left_right_flips_in_place_with_no_run() -> void:
 	assert_eq(ranger.dash_dir, 0)
 
 
+func test_left_right_and_z_on_the_same_tick_flips_then_starts_the_first_kick() -> void:
+	# A queued recovery `<<` plus `>` and Z on the same tick must not start
+	# a left slide. Combat runs before movement, so the opposite press has
+	# to clear the queue in begin_tick.
+	var world: SimWorld = SimSetup.create(&"test_room", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var previous: int = 0
+	var started: PackedStringArray = PackedStringArray()
+	var script: Array[Array] = [[Z, 1], [0, 10], [Z, 1], [0, 10], [Z, 1], [0, 10], [L, 1], [0, 2], [L, 1]]
+	for segment: Array in script:
+		var held: int = segment[0]
+		var ticks: int = segment[1]
+		for _i: int in ticks:
+			previous = _held(world, previous, held)
+			for event: SimEvent in world.events:
+				if event.type == &"move_start" and event.actor == ranger.id:
+					started.append(String(event.move_id))
+	assert_eq(ranger.queued_dash_dir, SimFighter.LEFT)
+	var x_at_queue: int = ranger.x
+	previous = _held(world, previous, R | Z)
+	for event: SimEvent in world.events:
+		if event.type == &"move_start" and event.actor == ranger.id:
+			started.append(String(event.move_id))
+	assert_eq(started, PackedStringArray(["ranger_z1", "ranger_z2", "ranger_z3", "ranger_z1"]), "same-tick >Z after << is z1, got %s" % [started])
+	assert_eq(ranger.facing, SimFighter.RIGHT)
+	assert_eq(ranger.dash_dir, 0)
+	assert_eq(ranger.queued_dash_ticks, 0)
+	assert_eq(ranger.x, x_at_queue, "the opposite press still flips in place")
+
+
 func test_hit_stop_freezes_attacker_and_target_then_resumes() -> void:
 	var world: SimWorld = SimSetup.create(&"training", 1)
 	var ranger: SimFighter = world.fighters[0]
