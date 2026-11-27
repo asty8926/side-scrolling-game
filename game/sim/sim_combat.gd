@@ -5,9 +5,6 @@ extends RefCounted
 
 ## Display phase of a move. Move state itself is its index + tick on SimFighter.
 enum Phase { IDLE, STARTUP, ACTIVE, RECOVERY }
-## Short buffer for the `<<>` facing twitch, so a slightly early back or
-## forward press still counts without eating a run input from 8 ticks ago.
-const DIR_CANCEL_BUFFER: int = 3
 
 
 static func current_move(world: SimWorld, f: SimFighter) -> MoveData:
@@ -56,7 +53,12 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 		f.hit_keys.clear()
 		move = null
 	if move != null:
-		if f.move_tick >= move.cancel_from and f.move_tick <= move.cancel_to:
+		# A new `>>` / `<<` during recovery starts a run and a possible new
+		# dash attack, and beats cancel_into (so `>>W` `>>W` is a new slide,
+		# not the follow-up `>>ZZ`).
+		if try_dash_cancel(world, f, history, move):
+			move = null
+		elif f.move_tick >= move.cancel_from and f.move_tick <= move.cancel_to:
 			for next_id: StringName in move.cancel_into:
 				var next: int = moveset.index_of(next_id)
 				if next >= 0 and history.buffered_press(_button(moveset.moves[next]), world.input_settings.buffer_ticks):
@@ -68,17 +70,9 @@ static func begin_tick(world: SimWorld, f: SimFighter, history: InputHistory) ->
 						_face_hit_targets(world, f)
 					_start(world, f, next)
 					return
-		if _try_dir_cancel(world, f, history, move):
+		else:
 			return
-		return
-	if f.dir_cancel_facing != 0:
-		_try_dir_cancel_return(world, f, history)
-		# A Z on the same tick as `>` (or instead of it) still starts Z1
-		# facing the original forward; otherwise stay locked in the twitch.
-		# dir_cancel_facing is cleared in advance() after movement, so a
-		# just-completed snap still has facing == dir_cancel_facing.
-		if f.dir_cancel_facing != 0 and f.facing != f.dir_cancel_facing:
-			f.idle_ticks = 0
+		if move != null:
 			return
 	var buffer: int = mini(world.input_settings.buffer_ticks, f.idle_ticks)
 	f.idle_ticks = mini(f.idle_ticks + 1, InputHistory.CAPACITY)
@@ -521,40 +515,30 @@ static func _apply_hitstop(attacker: SimFighter, target: SimFighter, move: MoveD
 		target.hitstop = maxi(target.hitstop, move.hitstop_ticks)
 
 
-## `<<` of `ZZZ<<>`: end the move, face away, no step. The original facing is
-## stored so `>` can snap back and reset the string.
-static func _try_dir_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData) -> bool:
-	if move.dir_cancel_from < 0 or f.move_tick < move.dir_cancel_from:
+## A double-tap of ← or → during recovery ends the move so movement can
+## start a dash on this same tick. The opposite press then cancels that dash
+## (`<<>`). A single back press does not lock the fighter in place.
+static func try_dash_cancel(world: SimWorld, f: SimFighter, history: InputHistory, move: MoveData) -> bool:
+	if f.move_tick < move.startup + move.active:
 		return false
-	var back: int = InputFrame.LEFT if f.facing == SimFighter.RIGHT else InputFrame.RIGHT
-	if not history.buffered_press(back, DIR_CANCEL_BUFFER):
+	var window: int = world.input_settings.double_tap_window_ticks
+	if not history.double_tap(InputFrame.RIGHT, window) and not history.double_tap(InputFrame.LEFT, window):
 		return false
 	_finish_pass(world, f)
 	if move.turn_at_end:
 		_face_hit_targets(world, f)
-	f.dir_cancel_facing = f.facing
-	f.facing = -f.facing
 	f.move = SimFighter.NO_MOVE
 	f.move_tick = 0
 	f.idle_ticks = 0
 	f.hit_keys.clear()
 	f.dash_dir = 0
 	f.dash_attack_ticks = 0
+	f.dir_cancel_facing = 0
 	f.vx = 0
-	world.emit_event(&"dir_cancel", f.id)
+	world.emit_event(&"dash_cancel", f.id)
 	return true
 
 
-## `>` of `ZZZ<<>`: snap back to the original forward facing, stay idle.
-static func _try_dir_cancel_return(world: SimWorld, f: SimFighter, history: InputHistory) -> void:
-	var forward: int = InputFrame.RIGHT if f.dir_cancel_facing == SimFighter.RIGHT else InputFrame.LEFT
-	if history.buffered_press(forward, DIR_CANCEL_BUFFER) or history.buffered_press(InputFrame.Z, DIR_CANCEL_BUFFER) or history.buffered_press(InputFrame.X, DIR_CANCEL_BUFFER):
-		f.facing = f.dir_cancel_facing
-		f.vx = 0
-		world.emit_event(&"dir_cancel_return", f.id)
-
-
-## Integer AABB overlap (touching edges count as touching/hit).
 static func overlaps(attacker: SimFighter, hit: HitboxData, target: SimFighter, hurt: HurtboxData) -> bool:
 	var ax: int = attacker.x + hit.offset_x * attacker.facing
 	var bx: int = target.x + hurt.offset_x * target.facing

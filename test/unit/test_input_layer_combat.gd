@@ -97,7 +97,7 @@ func test_www_left_right_loops_from_the_keyboard() -> void:
 		for _wait: int in 12:
 			driver.step_once()
 			_collect_starts(driver.world, started)
-	# After the third kick's cancel window is open, twitch turn <<>.
+	# After the third kick's recovery is open, double-tap left then right (`<<>`).
 	_key(KEY_LEFT, true)
 	await get_tree().process_frame
 	driver.step_once()
@@ -105,7 +105,13 @@ func test_www_left_right_loops_from_the_keyboard() -> void:
 	_key(KEY_LEFT, false)
 	await get_tree().process_frame
 	driver.step_once()
+	driver.step_once()
 	_collect_starts(driver.world, started)
+	_key(KEY_LEFT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_collect_starts(driver.world, started)
+	_key(KEY_LEFT, false)
 	_key(KEY_RIGHT, true)
 	await get_tree().process_frame
 	driver.step_once()
@@ -126,3 +132,89 @@ func test_www_left_right_loops_from_the_keyboard() -> void:
 	assert_true(started.has("ranger_z1"), "the string resets to the first kick")
 	assert_false(started.has("ranger_z4"), "the 4th kick was cancelled")
 	assert_eq(started[3], "ranger_z1", "the next Z after <<> is the first kick again: %s" % [started])
+
+
+func test_xxx_left_right_loops_from_the_keyboard() -> void:
+	var driver: SimDriver = _driver(&"training")
+	await get_tree().process_frame
+	var started: PackedStringArray = PackedStringArray()
+	for _shot: int in 3:
+		_key(KEY_X, true)
+		await get_tree().process_frame
+		driver.step_once()
+		_collect_starts(driver.world, started)
+		_key(KEY_X, false)
+		await get_tree().process_frame
+		for _wait: int in 22:
+			driver.step_once()
+			_collect_starts(driver.world, started)
+	_key(KEY_LEFT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_collect_starts(driver.world, started)
+	_key(KEY_LEFT, false)
+	await get_tree().process_frame
+	driver.step_once()
+	driver.step_once()
+	_key(KEY_LEFT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_collect_starts(driver.world, started)
+	_key(KEY_LEFT, false)
+	_key(KEY_RIGHT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_collect_starts(driver.world, started)
+	_key(KEY_RIGHT, false)
+	await get_tree().process_frame
+	driver.step_once()
+	_key(KEY_X, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_collect_starts(driver.world, started)
+	_key(KEY_X, false)
+	await get_tree().process_frame
+	assert_eq(started[0], "ranger_x1")
+	assert_eq(started[1], "ranger_x2")
+	assert_eq(started[2], "ranger_x3")
+	assert_false(started.has("ranger_x4"), "the 4th arrow was cancelled: %s" % [started])
+	assert_eq(started[3], "ranger_x1", "the next X after <<> is the first arrow again: %s" % [started])
+
+
+func test_www_left_right_www_left_left_ends_running_left_from_the_keyboard() -> void:
+	var driver: SimDriver = _driver(&"test_room")
+	await get_tree().process_frame
+	for _cycle: int in 2:
+		for _kick: int in 3:
+			_key(KEY_Z, true)
+			await get_tree().process_frame
+			driver.step_once()
+			_key(KEY_Z, false)
+			await get_tree().process_frame
+			for _wait: int in 12:
+				driver.step_once()
+		# First cycle: <<> (double-tap left, then right cancels the run).
+		# Second cycle: << and keep holding left so the run continues.
+		_key(KEY_LEFT, true)
+		await get_tree().process_frame
+		driver.step_once()
+		_key(KEY_LEFT, false)
+		await get_tree().process_frame
+		driver.step_once()
+		driver.step_once()
+		_key(KEY_LEFT, true)
+		await get_tree().process_frame
+		driver.step_once()
+		if _cycle == 0:
+			_key(KEY_LEFT, false)
+			_key(KEY_RIGHT, true)
+			await get_tree().process_frame
+			driver.step_once()
+			_key(KEY_RIGHT, false)
+			await get_tree().process_frame
+			driver.step_once()
+	for _hold: int in 6:
+		driver.step_once()
+	var ranger: SimFighter = driver.world.fighters[0]
+	assert_eq(ranger.dash_dir, SimFighter.LEFT, "WWW<<>WWW<< ends running left (dash_dir=%d)" % ranger.dash_dir)
+	assert_eq(ranger.facing, SimFighter.LEFT)

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_movement")
-walk_speed = 65
-dash_speed = 150
+walk_speed = 120
+dash_speed = 240
 jump_velocity = 230
 double_jump_velocity = 230
 gravity = 10

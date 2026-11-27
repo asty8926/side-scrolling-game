@@ -17,7 +17,7 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 	var m: MovementParams = world.movement
 	var room: RoomLayout = world.room
 	var window: int = world.input_settings.double_tap_window_ticks
-	var attacking: bool = f.is_in_move() or f.is_in_hitstun() or f.dir_cancel_facing != 0
+	var attacking: bool = f.is_in_move() or f.is_in_hitstun()
 	var held: int = 0 if attacking else history.held_now()
 	var pressed: int = 0 if attacking else history.pressed_ago(0)
 	var dir: int = 0
@@ -27,40 +27,10 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		dir -= 1
 
 	# Dash start / reverse / stop.
-	var started: int = 0
-	var reverse_press: bool = false
-	if f.dash_dir != 0:
-		var against: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
-		reverse_press = (pressed & against) != 0
-	# An opposite press during a dash is always the reverse (below), even when it
-	# also completes a double tap.
-	if not reverse_press and not attacking:
-		if history.double_tap(InputFrame.RIGHT, window):
-			started = SimFighter.RIGHT
-		elif history.double_tap(InputFrame.LEFT, window):
-			started = SimFighter.LEFT
-	var reversed: bool = false
-	if started != 0:
-		f.dash_dir = started
-		f.facing = started
-		world.emit_event(&"dash", f.id)
-	elif f.dash_dir != 0:
-		var opposite: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
-		if (pressed & opposite) != 0:
-			f.facing = -f.dash_dir
-			f.dash_dir = 0
-			reversed = true
-			world.emit_event(&"dash_reverse", f.id)
-		elif f.is_grounded() and dir != f.dash_dir:
-			f.dash_dir = 0
-			f.dash_attack_ticks = world.input_settings.dash_attack_linger_ticks
-			world.emit_event(&"dash_stop", f.id)
+	var reversed: bool = apply_dash_intent(world, f, history, attacking, pressed, dir, window)
 
 	# Horizontal speed.
-	if f.dir_cancel_facing != 0:
-		# `<<>` twitch: face-turn only, no step (footage).
-		f.vx = 0
-	elif reversed:
+	if reversed:
 		f.vx = 0
 	elif f.dash_dir != 0:
 		f.vx = f.dash_dir * m.dash_speed
@@ -133,3 +103,38 @@ static func step_fighter(world: SimWorld, f: SimFighter, history: InputHistory) 
 		world.emit_event(&"land", f.id)
 	else:
 		f.y = new_y
+
+
+## Updates dash_dir and facing only. Also used during hit-stop so a `>` or a
+## second tap pressed while frozen still counts (Asty: a double-tap always
+## starts a run; the opposite press cancels it the frame it is pressed).
+static func apply_dash_intent(world: SimWorld, f: SimFighter, history: InputHistory, attacking: bool, pressed: int, dir: int, window: int) -> bool:
+	var started: int = 0
+	var reverse_press: bool = false
+	if f.dash_dir != 0:
+		var against: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+		reverse_press = (pressed & against) != 0
+	# An opposite press during a dash is always the reverse (below), even when it
+	# also completes a double tap.
+	if not reverse_press and not attacking:
+		if history.double_tap(InputFrame.RIGHT, window):
+			started = SimFighter.RIGHT
+		elif history.double_tap(InputFrame.LEFT, window):
+			started = SimFighter.LEFT
+	var reversed: bool = false
+	if started != 0:
+		f.dash_dir = started
+		f.facing = started
+		world.emit_event(&"dash", f.id)
+	elif f.dash_dir != 0:
+		var opposite: int = InputFrame.LEFT if f.dash_dir == SimFighter.RIGHT else InputFrame.RIGHT
+		if (pressed & opposite) != 0:
+			f.facing = -f.dash_dir
+			f.dash_dir = 0
+			reversed = true
+			world.emit_event(&"dash_reverse", f.id)
+		elif f.is_grounded() and dir != f.dash_dir:
+			f.dash_dir = 0
+			f.dash_attack_ticks = world.input_settings.dash_attack_linger_ticks
+			world.emit_event(&"dash_stop", f.id)
+	return reversed

@@ -14,6 +14,8 @@ Asty judges feel by playing. Agents can't, so every move that moves the characte
 1. **Reference first.** Add a row to the move's table: the ElWiki command text (cite the URL), the video and timestamp you measured, and the value. Tag each number [doc], [obs], [est] or [ours]. Measure in CW (character widths, 600 sub) and ticks, not pixels.
 2. **Data.** Put the motion in the move's `root_motion` (sub-units per tick) and, for pass-throughs, in `pass_overshoot`, in `data/characters/*.tres`. Hot reload lets Asty try values live.
 3. **Test.** Add the step to `test_feel_displacement.gd` with a range about ±30% around the reference. It should catch "doesn't move", "wrong way" and "twice as far", not a 10% tune.
+Feel checks also cover walk and run speed, back-to-back `>>Z` / `>>ZX` loop gap, `XXX<<>` and `WWW<<>WWW<<`, and empty-space `>>ZX`. Display (1920×1080, fullscreen, Alt+Enter / F11) is asserted in `test/unit/test_smoke.gd`.
+
 4. **Replays.** If movement changed, re-bake the golden fixtures on purpose and list the hash change and its cause in the PR:
    - `godot --headless -s res://tools/make_example_replay.gd`
    - `godot --headless -s res://tools/rebake_replay.gd -- res://test/replay/fixtures/recorded_keyboard_10s.tres`

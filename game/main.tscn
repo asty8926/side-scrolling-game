@@ -1,4 +1,4 @@
-[gd_scene load_steps=16 format=3 uid="uid://ct4vh1ogesovc"]
+[gd_scene load_steps=17 format=3 uid="uid://ct4vh1ogesovc"]
 
 [ext_resource type="Script" uid="uid://dlr0ckqydok58" path="res://game/sim_driver.gd" id="1_driver"]
 [ext_resource type="Script" uid="uid://dmgaipp6eaeby" path="res://game/input/input_hint.gd" id="2_hint"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" uid="uid://c4e4jmh2t5wq7" path="res://game/debug/data_reloader.gd" id="8_reloader"]
 [ext_resource type="Script" uid="uid://dfoeid4crkw8v" path="res://game/debug/reload_toast.gd" id="9_toast"]
 [ext_resource type="Script" uid="uid://dk4ukrdk64mho" path="res://game/debug/debug_overlay.gd" id="10_overlay"]
+[ext_resource type="Script" uid="uid://cdd5twjj3h8np" path="res://game/view/display_mode.gd" id="12_display"]
 [ext_resource type="Resource" uid="uid://ca3pskopkg48x" path="res://data/view/side_camera.tres" id="11_cam"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_material"]
@@ -84,10 +85,11 @@ driver = NodePath("../SimDriver")
 [node name="Hud" type="CanvasLayer" parent="."]
 
 [node name="Title" type="Label" parent="Hud"]
-offset_left = 12.0
-offset_top = 8.0
-offset_right = 400.0
-offset_bottom = 36.0
+offset_left = 20.0
+offset_top = 16.0
+offset_right = 640.0
+offset_bottom = 56.0
+theme_override_font_sizes/font_size = 24
 text = "side-scrolling-game M0 - test room"
 
 [node name="InputHint" type="Label" parent="Hud"]
@@ -95,10 +97,10 @@ anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -48.0
+offset_top = -72.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_font_sizes/font_size = 13
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 autowrap_mode = 3
 script = ExtResource("2_hint")
@@ -107,21 +109,21 @@ script = ExtResource("2_hint")
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -260.0
-offset_top = 8.0
-offset_right = -12.0
-offset_bottom = 36.0
+offset_left = -400.0
+offset_top = 16.0
+offset_right = -20.0
+offset_bottom = 56.0
 grow_horizontal = 0
 horizontal_alignment = 2
 script = ExtResource("7_rec_label")
 recorder = NodePath("../../SimDriver/ReplayRecorder")
 
 [node name="ReloadToast" type="Label" parent="Hud" node_paths=PackedStringArray("reloader")]
-offset_left = 12.0
-offset_top = 40.0
-offset_right = 700.0
-offset_bottom = 200.0
-theme_override_font_sizes/font_size = 15
+offset_left = 20.0
+offset_top = 64.0
+offset_right = 1100.0
+offset_bottom = 280.0
+theme_override_font_sizes/font_size = 24
 autowrap_mode = 3
 script = ExtResource("9_toast")
 reloader = NodePath("../../SimDriver/DataReloader")
@@ -130,3 +132,6 @@ reloader = NodePath("../../SimDriver/DataReloader")
 script = ExtResource("10_overlay")
 driver = NodePath("../SimDriver")
 world_root = NodePath("..")
+
+[node name="DisplayMode" type="Node" parent="."]
+script = ExtResource("12_display")

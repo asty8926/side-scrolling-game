@@ -271,7 +271,24 @@ func step(inputs: Array[InputFrame]) -> void:
 			frozen = true
 			break
 	if frozen:
+		# Record dash / reverse / recovery-cancel input during the pause so a
+		# `>` or `<<` pressed on a frozen tick still takes effect. Position
+		# and move ticks stay frozen.
 		for fighter: SimFighter in fighters:
+			var history: InputHistory = histories[fighter.player] if fighter.player >= 0 and fighter.player < histories.size() else empty_history
+			var move: MoveData = SimCombat.current_move(self, fighter)
+			if move != null:
+				SimCombat.try_dash_cancel(self, fighter, history, move)
+			var window: int = input_settings.double_tap_window_ticks
+			var attacking: bool = fighter.is_in_move() or fighter.is_in_hitstun()
+			var held: int = 0 if attacking else history.held_now()
+			var pressed: int = history.pressed_ago(0)
+			var dir: int = 0
+			if (held & InputFrame.RIGHT) != 0:
+				dir += 1
+			if (held & InputFrame.LEFT) != 0:
+				dir -= 1
+			SimMovement.apply_dash_intent(self, fighter, history, attacking, pressed, dir, window)
 			if fighter.hitstop > 0:
 				fighter.hitstop -= 1
 		tick += 1
