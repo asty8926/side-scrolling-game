@@ -65,6 +65,10 @@ var hitstop: int = 0
 ## with no step, waiting for a press of this facing (the original forward)
 ## to snap back and reset the string.
 var dir_cancel_facing: int = 0
+## Recovery double-tap that has not started moving yet (0 = none).
+var queued_dash_dir: int = 0
+## Ticks left before a queued recovery dash starts, or is dropped if unheld.
+var queued_dash_ticks: int = 0
 
 ## Fixed fields in snapshot order (hit_keys follow as a count + values).
 ## Append new fields at the end and bump SimWorld.SNAPSHOT_VERSION.
@@ -72,7 +76,7 @@ var dir_cancel_facing: int = 0
 ## SimCombat.apply_motion before any hit of the tick, so it is never stale).
 var stunned_this_tick: bool = false
 
-const FIELD_COUNT: int = 24
+const FIELD_COUNT: int = 26
 ## Most hits one move can record (hitboxes x targets).
 const MAX_HIT_KEYS: int = 256
 
@@ -90,7 +94,7 @@ func is_in_hitstun() -> bool:
 
 
 func write_to(buf: StreamPeerBuffer) -> void:
-	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks, hp, hitstun, kd, combo, last_damage, home_x, dash_attack_ticks, hitstop, dir_cancel_facing]:
+	for value: int in [id, player, character, x, y, vx, vy, facing, ground, air_jumps, dash_dir, drop_ticks, move, move_tick, idle_ticks, hp, hitstun, kd, combo, last_damage, home_x, dash_attack_ticks, hitstop, dir_cancel_facing, queued_dash_dir, queued_dash_ticks]:
 		buf.put_64(value)
 	buf.put_32(hit_keys.size())
 	for key: int in hit_keys:
@@ -125,6 +129,8 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 	f.dash_attack_ticks = buf.get_64()
 	f.hitstop = buf.get_64()
 	f.dir_cancel_facing = buf.get_64()
+	f.queued_dash_dir = buf.get_64()
+	f.queued_dash_ticks = buf.get_64()
 	var key_count: int = buf.get_32()
 	if key_count < 0 or key_count > MAX_HIT_KEYS or buf.get_available_bytes() < key_count * 8:
 		return null
@@ -137,5 +143,7 @@ static func read_from(buf: StreamPeerBuffer) -> SimFighter:
 	if f.move < NO_MOVE or f.move_tick < 0 or f.idle_ticks < 0 or f.hp < 0 or f.hitstun < 0 or f.kd < 0 or f.combo < 0 or f.dash_attack_ticks < 0 or f.hitstop < 0:
 		return null
 	if absi(f.dir_cancel_facing) > 1:
+		return null
+	if absi(f.queued_dash_dir) > 1 or f.queued_dash_ticks < 0:
 		return null
 	return f

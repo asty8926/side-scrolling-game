@@ -6,9 +6,9 @@ extends Resource
 
 @export_group("Ground movement")
 ## Sub-units per tick. # proposal, tune
-@export_range(1, 2000, 1, "suffix:sub/tick") var walk_speed: int = 120
+@export_range(1, 2000, 1, "suffix:sub/tick") var walk_speed: int = 65
 ## Sub-units per tick. # proposal, tune
-@export_range(1, 3000, 1, "suffix:sub/tick") var dash_speed: int = 240
+@export_range(1, 3000, 1, "suffix:sub/tick") var dash_speed: int = 150
 @export_group("Jump")
 ## Upward sub-units per tick when jumping. # proposal, tune
 @export_range(1, 1000, 1, "suffix:sub/tick") var jump_velocity: int = 230

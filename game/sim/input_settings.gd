@@ -11,6 +11,11 @@ extends Resource
 ## ticks (12 ticks = 0.2 s). 0 = only while the run key is still held, or on
 ## the same tick as the second tap. # proposal, tune
 @export_range(0, 60, 1, "suffix:ticks") var dash_attack_linger_ticks: int = 12
+## After a recovery double-tap, ticks to wait before the run starts, so a
+## quick opposite press (`<<>`) can flip facing in place. Footage: movement
+## begins ~11 frames after a held second tap; an opposite at ~4 frames does
+## not run. 10 ticks [seen]. Idle double-taps still start the run immediately.
+@export_range(1, 60, 1, "suffix:ticks") var dash_confirm_ticks: int = 10
 
 
 ## Returns a list of problems; empty when the data is usable.
@@ -22,4 +27,6 @@ func validate() -> Array[String]:
 		problems.append("buffer_ticks must be in [0, %d], got %d" % [InputHistory.CAPACITY - 1, buffer_ticks])
 	if dash_attack_linger_ticks < 0 or dash_attack_linger_ticks >= InputHistory.CAPACITY:
 		problems.append("dash_attack_linger_ticks must be in [0, %d], got %d" % [InputHistory.CAPACITY - 1, dash_attack_linger_ticks])
+	if dash_confirm_ticks < 1 or dash_confirm_ticks >= InputHistory.CAPACITY:
+		problems.append("dash_confirm_ticks must be in [1, %d], got %d" % [InputHistory.CAPACITY - 1, dash_confirm_ticks])
 	return problems

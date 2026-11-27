@@ -213,8 +213,47 @@ func test_www_left_right_www_left_left_ends_running_left_from_the_keyboard() -> 
 			_key(KEY_RIGHT, false)
 			await get_tree().process_frame
 			driver.step_once()
-	for _hold: int in 6:
+	for _hold: int in 14:
 		driver.step_once()
 	var ranger: SimFighter = driver.world.fighters[0]
 	assert_eq(ranger.dash_dir, SimFighter.LEFT, "WWW<<>WWW<< ends running left (dash_dir=%d)" % ranger.dash_dir)
 	assert_eq(ranger.facing, SimFighter.LEFT)
+
+
+func test_www_left_right_flips_in_place_from_the_keyboard() -> void:
+	# WWW<<> at the right timing must flip facing with no run-and-return.
+	var driver: SimDriver = _driver(&"test_room")
+	await get_tree().process_frame
+	for _kick: int in 3:
+		_key(KEY_Z, true)
+		await get_tree().process_frame
+		driver.step_once()
+		_key(KEY_Z, false)
+		await get_tree().process_frame
+		for _wait: int in 12:
+			driver.step_once()
+	_key(KEY_LEFT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_key(KEY_LEFT, false)
+	await get_tree().process_frame
+	driver.step_once()
+	driver.step_once()
+	_key(KEY_LEFT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	var ranger: SimFighter = driver.world.fighters[0]
+	var x_at_queue: int = ranger.x
+	assert_eq(ranger.queued_dash_dir, SimFighter.LEFT)
+	assert_eq(ranger.dash_dir, 0)
+	_key(KEY_LEFT, false)
+	_key(KEY_RIGHT, true)
+	await get_tree().process_frame
+	driver.step_once()
+	_key(KEY_RIGHT, false)
+	await get_tree().process_frame
+	driver.step_once()
+	driver.step_once()
+	assert_eq(ranger.facing, SimFighter.RIGHT, "quick > flips facing in place")
+	assert_eq(ranger.dash_dir, 0, "no run starts")
+	assert_eq(ranger.x, x_at_queue, "WWW<<> does not run the other way")
