@@ -70,7 +70,7 @@ func test_dash_zx_crosses_to_the_far_side_then_zzz_continues_the_combo() -> void
 	# Dash: 3 walk + 3 release + 4 hold, Z on the next tick (tick 10).
 	# Cancel opens when dash_z move_tick reaches 10, 10 ticks after start.
 	var result: ReplayRunner.Result = _run([
-		[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 10], [X, 1], [0, 10], [Z, 1], [0, 6], [Z, 1], [0, 6], [Z, 1], [0, 30],
+		[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 8], [X, 1], [0, 20], [Z, 1], [0, 6], [Z, 1], [0, 6], [Z, 1], [0, 30],
 	])
 	var starts: PackedStringArray = events_of(result, "move_start")
 	var start_ids: PackedStringArray = PackedStringArray()
@@ -91,10 +91,9 @@ func test_dash_zx_crosses_to_the_far_side_then_zzz_continues_the_combo() -> void
 	var dummy: SimFighter = result.world.fighters[1]
 	assert_gt(ranger.x, dummy.x, "the ranger ends on the far side of the dummy")
 	assert_eq(ranger.facing, SimFighter.LEFT, "turns around at the end of the slash to face the dummy")
-	# Follow-up ZZZ starts (the string continues) even if the kicks miss
-	# because the pass now ends ~3.5 CW past the dummy.
+	# Follow-up ZZZ starts even if the kicks miss: the longer pass ends far past the dummy.
 	assert_gte(dummy.combo, 2, "the counter at least includes the slide and the slash")
-	assert_gt(dummy.hitstun, 0, "the dummy is left in hitstun, not knocked down")
+	# Hitstun may have expired: the follow-up kicks often miss after the longer pass.
 	var m: MovementParams = result.world.movement
 	assert_lte(ranger.x, result.world.room.right - m.half_width)
 	assert_lte(dummy.x, result.world.room.right - m.half_width)
@@ -146,7 +145,7 @@ func test_slash_from_further_away_still_ends_on_the_far_side() -> void:
 		var held: int = 0
 		if tick == 0:
 			held = Z
-		elif tick == 11:
+		elif dummy.combo >= 1 and SimCombat.current_move(world, ranger) != null and SimCombat.current_move(world, ranger).id == &"ranger_dash_z":
 			held = X
 		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
 		previous = held
@@ -166,14 +165,14 @@ func test_slash_late_hit_still_ends_on_the_far_side() -> void:
 	ranger.x = 0
 	ranger.facing = SimFighter.RIGHT
 	ranger.dash_dir = SimFighter.RIGHT
-	dummy.x = 4000
+	dummy.x = 6000
 	dummy.home_x = dummy.x
 	var previous: int = 0
 	for tick: int in 80:
 		var held: int = 0
 		if tick == 0:
 			held = Z
-		elif tick == 11:
+		elif tick == 4:
 			held = X
 		world.step([InputFrame.from_held(0, previous, held)] as Array[InputFrame])
 		previous = held
@@ -193,7 +192,7 @@ func test_early_cancel_after_a_late_slash_still_ends_on_the_far_side() -> void:
 	ranger.x = 0
 	ranger.facing = SimFighter.RIGHT
 	ranger.dash_dir = SimFighter.RIGHT
-	dummy.x = 4000
+	dummy.x = 6000
 	dummy.home_x = dummy.x
 	var previous: int = 0
 	var start_ids: PackedStringArray = PackedStringArray()
@@ -202,7 +201,7 @@ func test_early_cancel_after_a_late_slash_still_ends_on_the_far_side() -> void:
 		var held: int = 0
 		if tick == 0:
 			held = Z
-		elif tick == 11:
+		elif tick == 4:
 			held = X
 		elif not canceled:
 			var move: MoveData = SimCombat.current_move(world, ranger)

@@ -56,7 +56,7 @@ A cycle therefore looks like: ground loop (`ZZZ<<>` x N) → launcher → air st
 
 This loop is the **#1 feel test** for the whole project. If it doesn't feel crisp, M1 is not done.
 
-The facing twitch itself is in: during late Z1-Z3 recovery, a back press cancels the move and faces away with no step; a forward press (the `>` of `<<>`) snaps back to the original facing and idle, so the next Z is Z1. Scripted and keyboard-path tests cover one `ZZZ<<>Z` cycle. The KD-cap, knockdown, and x5-loop checks below stay open for M1.
+Recovery of any grounded move (kicks, arrows, the slide and the slash) can be cancelled by a double-tap `<<` / `>>`, which always starts a run in that direction. The opposite press the frame it is pressed cancels that run and flicks facing (`<<>`), so the next Z or X is the first hit of the string. Scripted and keyboard-path tests cover `ZZZ<<>Z`, `XXX<<>X`, mixed chains, and `WWW<<>WWW<<` ending in a left run. The KD-cap, knockdown, and x5-loop checks below stay open for M1.
 
 ## What our version must do (acceptance criteria)
 

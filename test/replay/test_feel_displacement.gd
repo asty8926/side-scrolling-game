@@ -94,7 +94,13 @@ func test_x_chain_first_arrow_stays_then_each_arrow_recoils_backward() -> void:
 func test_dash_w_slides_forward_a_real_distance() -> void:
 	# >> (tap, release, hold) then Z while dashing.
 	var trace: Array[Mark] = _trace(_open(), [[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 40]])
-	_assert_cw(_steps(trace), "ranger_dash_z", 3.2, 4.5)
+	_assert_cw(_steps(trace), "ranger_dash_z", 5.8, 7.5)
+
+
+func test_dash_wx_covers_full_distance_in_open_space() -> void:
+	# X mid-slide, no dummy: the slash itself is a fixed ~8 CW dash.
+	var trace: Array[Mark] = _trace(_open(), [[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 4], [X, 1], [0, 40]])
+	_assert_cw(_steps(trace), "ranger_dash_zx", 7.0, 9.0)
 
 
 func test_dash_w_slide_carries_the_dummy_and_stays_in_contact() -> void:
@@ -108,18 +114,15 @@ func test_dash_w_slide_carries_the_dummy_and_stays_in_contact() -> void:
 	assert_eq(dummy.combo, 1, "the slide kick lands")
 
 
-func test_dash_wx_dashes_well_past_the_target_and_w_still_connects() -> void:
+func test_dash_wx_dashes_well_past_the_target() -> void:
 	var world: SimWorld = SimSetup.create(&"training", 1)
 	var ranger: SimFighter = world.fighters[0]
 	var dummy: SimFighter = world.fighters[1]
-	var trace: Array[Mark] = _trace(world, [[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 10], [X, 1], [0, 30]])
+	var trace: Array[Mark] = _trace(world, [[R, 3], [0, 3], [R, 1], [R | Z, 1], [0, 8], [X, 1], [0, 40]])
 	var steps: Dictionary[String, int] = _steps(trace)
-	_assert_cw(steps, "ranger_dash_zx", 4.5, 6.5)
+	_assert_cw(steps, "ranger_dash_zx", 6.5, 10.0)
 	var behind: float = float(ranger.x - dummy.x) / CW
-	assert_between(behind, 3.0, 4.2, "ends %.2f CW past the dummy (reference ~3.5 CW, center to center)" % behind)
-	# The follow-up string still starts after the slash turns her around.
-	# Whether those kicks reach (the dummy is now ~3.5 CW behind) is the
-	# standing-W vs pass-distance tradeoff left for Asty.
+	assert_gte(behind, 6.0, "ends %.2f CW past the dummy (longer pass; a follow-up WWW may need a run back)" % behind)
 	var follow: Array[Mark] = _trace(world, _mash(Z, 6, 3, 40))
 	assert_eq(follow[0].id, "ranger_z1")
 	assert_gte(dummy.combo, 2, "the slide and the slash both land")
@@ -141,21 +144,21 @@ func test_dash_w_on_the_same_tick_as_the_second_tap_slides() -> void:
 	# run before the dash started, so that input became standing Z (no slide).
 	var trace: Array[Mark] = _trace(_open(), [[R, 3], [0, 3], [R | Z, 1], [0, 40]])
 	assert_eq(trace[0].id, "ranger_dash_z")
-	_assert_cw(_steps(trace), "ranger_dash_z", 3.2, 4.5)
+	_assert_cw(_steps(trace), "ranger_dash_z", 5.8, 7.5)
 
 
 func test_dash_w_after_holding_the_run_slides() -> void:
 	# Double-tap, hold the run for a stretch, then W while still holding.
 	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 20], [R | Z, 1], [0, 40]])
 	assert_eq(trace[0].id, "ranger_dash_z")
-	_assert_cw(_steps(trace), "ranger_dash_z", 3.2, 4.5)
+	_assert_cw(_steps(trace), "ranger_dash_z", 5.8, 7.5)
 
 
 func test_dash_w_after_releasing_the_run_still_slides() -> void:
 	# Double-tap, hold, release, then W a few ticks later (still in linger).
 	var trace: Array[Mark] = _trace(_open(), [[R, 1], [0, 2], [R, 20], [0, 4], [Z, 1], [0, 40]])
 	assert_eq(trace[0].id, "ranger_dash_z")
-	_assert_cw(_steps(trace), "ranger_dash_z", 3.2, 4.5)
+	_assert_cw(_steps(trace), "ranger_dash_z", 5.8, 7.5)
 
 
 func test_w_after_the_dash_linger_expires_is_the_standing_kick() -> void:

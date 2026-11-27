@@ -102,12 +102,12 @@ to_tick = 9
 
 [sub_resource type="Resource" id="hit_6"]
 script = ExtResource("2_hit")
-offset_x = 200
+offset_x = 0
 offset_y = 200
-width = 900
+width = 1400
 height = 900
-from_tick = 4
-to_tick = 9
+from_tick = 0
+to_tick = 19
 
 [sub_resource type="Resource" id="hit_7"]
 script = ExtResource("2_hit")
@@ -322,22 +322,22 @@ hitstun_ticks = 28
 kd = 15
 pushback = 40
 cancel_into = Array[StringName]([&"ranger_dash_zx", &"ranger_dash_zz"])
-cancel_from = 7
-cancel_to = 20
-root_motion = PackedInt32Array(300, 280, 260, 240, 220, 200, 180, 160, 140, 120, 100, 80)
+cancel_from = 0
+cancel_to = 23
+root_motion = PackedInt32Array(420, 400, 380, 360, 340, 320, 300, 270, 240, 210, 180, 150, 120, 90, 60, 60)
 pass_from = -1
 pass_to = -1
 turn_at_end = false
-carry_to = 11
+carry_to = 15
 
 [sub_resource type="Resource" id="move_9"]
 script = ExtResource("1_move")
 id = &"ranger_dash_zx"
 button = 1
 start = 0
-startup = 4
-active = 6
-recovery = 14
+startup = 0
+active = 20
+recovery = 6
 hitboxes = Array[ExtResource("2_hit")]([SubResource("hit_6")])
 projectiles = Array[ExtResource("4_shot")]([])
 damage_percent = 267
@@ -346,14 +346,14 @@ kd = 5
 camera_shake = true
 pushback = 80
 cancel_into = Array[StringName]([&"ranger_z1"])
-cancel_from = 6
-cancel_to = 22
-root_motion = PackedInt32Array(130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130, 130)
-pass_from = 2
-pass_to = 16
-pass_overshoot = 1500
+cancel_from = 8
+cancel_to = 25
+root_motion = PackedInt32Array(580, 550, 520, 480, 440, 400, 360, 320, 280, 240, 200, 160, 120, 80, 50, 20)
+pass_from = 0
+pass_to = 25
+pass_overshoot = 0
 turn_at_end = true
-carry_to = 7
+carry_to = -1
 
 [sub_resource type="Resource" id="move_10"]
 script = ExtResource("1_move")

@@ -24,9 +24,9 @@ func _ready() -> void:
 	layer = 10
 	_label = Label.new()
 	_label.name = "Text"
-	_label.position = Vector2(12, 44)
-	_label.add_theme_font_size_override(&"font_size", 14)
-	_label.add_theme_constant_override(&"outline_size", 5)
+	_label.position = Vector2(20, 72)
+	_label.add_theme_font_size_override(&"font_size", 22)
+	_label.add_theme_constant_override(&"outline_size", 8)
 	_label.add_theme_color_override(&"font_outline_color", Color(0, 0, 0, 0.9))
 	add_child(_label)
 	_mesh = ImmediateMesh.new()

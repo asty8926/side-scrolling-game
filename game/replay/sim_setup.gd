@@ -70,3 +70,24 @@ static func _training(world_seed: int) -> SimWorld:
 	fighter.home_x = fighter.x
 	fighter.facing = SimFighter.LEFT
 	return world
+
+
+## Places another training dummy at `x` (facing the spawn). Used by tests for
+## multi-target `>>WX`. Returns the new fighter, or null on failure.
+static func add_dummy_at(world: SimWorld, x: int) -> SimFighter:
+	if world == null or world.characters.is_empty():
+		return null
+	var dummy_index: int = -1
+	for i: int in world.characters.size():
+		if world.characters[i].id == &"dummy":
+			dummy_index = i
+			break
+	if dummy_index < 0:
+		dummy_index = world.add_character(load(DUMMY) as CharacterData)
+	if dummy_index < 0 or world.add_fighter(SimFighter.NO_PLAYER, dummy_index) < 0:
+		return null
+	var fighter: SimFighter = world.fighters[world.fighters.size() - 1]
+	fighter.x = x
+	fighter.home_x = x
+	fighter.facing = SimFighter.LEFT if x > world.room.spawn_x else SimFighter.RIGHT
+	return fighter

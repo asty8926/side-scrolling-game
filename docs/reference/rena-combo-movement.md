@@ -40,10 +40,10 @@ Displacement is per chain step, measured in open space: her x on the next step's
 | `X` 2nd arrow | small push back | [obs] | -150 | -0.25 | 2-7 | -0.4..-0.15 |
 | `X` 3rd (backflip, 2 arrows) | backflip | [doc] for the backflip, distance [ours] | -900 | -1.50 | 0-14 | -1.8..-1.2 |
 | `X` 4th arrow | push back | [obs] | -300 | -0.50 | 9-16 | -0.7..-0.35 |
-| `>>Z` slide kick | run converts to the slide immediately on Z [seen]; footage length ~1.5-2 CW in ~15-20 frames [guess]; Asty asked for it to go much further than our previous 1.9 CW, so this is doubled on purpose | [seen] for instant convert, [guess] for footage length, distance [ours] (Asty's choice, longer than footage) | +2280 (300→80 per tick) | +3.80 | 0-11 | 3.2..4.5 |
-| `>>ZX` dash-through | X can be pressed as soon as the slide connects (hit-cancel) [seen]; Reboot/Night Watcher travels ~3-4 CW past the target before the backward arrow [seen]; we land at 3.5 CW past [ours] | [seen] for hit-cancel and past-target travel, distance [ours] | +1820 root motion, ends 1500 past the far side | ≈ +5.4 travelled | 0-13 | travel 4.5..6.5, ends 3.0..4.2 CW past the target (center to center) |
+| `>>Z` slide kick | run converts to the slide immediately on Z [seen]; footage length ~1.5-2 CW in ~15-20 frames [guess]; Asty asked twice for it to go much further (first 1.9, then 3.80 still too short) | [seen] for instant convert, [guess] for footage length, distance [ours] | +3900 (420→60, snappy curve) | +6.50 | 0-15 | 5.8..7.5 |
+| `>>ZX` dash-through | X can cancel the slide from the first ticks, not only on connect [obs]; it is a fixed-distance pass-through even with no enemy, and hits each target along the path once [obs]; footage Reboot/Night Watcher travels ~3-4 CW past a target [seen] | [obs] for no-enemy full dash and multi-hit, [seen] for past-target travel, distance [ours] | +4800 root motion (580→20); pass for the whole move; `pass_overshoot` 0 | +8.00 of slash (plus leftover slide if X is late) | 0-15 | slash 7.0..9.0 in open space; ends ≥6 CW past the training dummy |
 
-Open-space `>>Z` now travels 2280 sub (3.80 CW). Against the training dummy (ranger at 0, dummy at +1000), the slide is no longer eaten by the body box: leftover root motion drives the dummy forward so they travel together, and the kick still lands. `>>ZX` `pass_overshoot` is 1500, so she ends 2100 sub (3.5 CW, center to center) past the dummy. `dash_z.cancel_from` is 7 (the tick after the first active frame) so a press on the connect tick is buffered, the slide still hits, then the slash starts. The first two follow-up kicks were lengthened earlier so WWW still lands after the pass (`Z` 1: offset 800, width 900; `Z` 2: offset 650, width 800); whether standing W should stay that long is still Asty's call. Screenshot after `>>WX` in an earlier build: [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 push it back 240 sub per hit, so the whole `ZZZZ` walks forward and all four hits land.
+Open-space `>>Z` travels 3900 sub (6.50 CW). Against the training dummy (ranger at 0, dummy at +1000), leftover root motion still drives the dummy forward during the slide so they travel together, and the kick still lands. `>>ZX` is a fixed 4800 sub (8.00 CW) pass-through: it ignores pushboxes for the whole move, so it covers that distance in empty space as well as through one or more enemies. Each enemy on the path is hit once. A mid-slide X (after some of the slide has already travelled) can total a bit over 10 CW; that is accepted [ours] so empty-space `>>WX` itself stays long. `dash_z.cancel_from` is 0, so X can cancel from the first ticks; a press after the kick's first active frame still lets the slide hit, then the slash starts. Because the slash now ends far past the dummy, a follow-up `WWW` will usually miss unless the player runs back. That is fine [ours]. Screenshot after `>>WX` in an earlier, shorter build: [../evidence/61-dash-wx-end.png](../evidence/61-dash-wx-end.png). Against the dummy, kicks 2-4 still push it back 240 sub per hit, so a standing `ZZZZ` walks forward and all four hits land.
 
 ## `ZZZ` and the `ZZZ<<>` loop
 
@@ -52,11 +52,11 @@ Open-space `>>Z` now travels 2280 sub (3.80 CW). Against the training dummy (ran
 | Time between kicks | ~10-15 frames | [guess] | cancel window opens at the first recovery tick (8, 8, 9); a buffered press starts the next kick immediately |
 | Later Z during a kick | cancels the current kick's recovery | [seen] | existing `cancel_into` + 8-tick input buffer |
 | Forward step per kick | ~0.25-0.5 CW, to stay glued as the target is pushed | [seen] | Z1 0, Z2/Z3 +0.50 CW, Z4 +0.75 CW (unchanged) |
-| `<<` of `ZZZ<<>` | she instantly faces away, no step | [seen] | `dir_cancel_from` on Z1-Z3; one back press ends the move, faces away, vx = 0 |
-| `>` after `<<` | snaps back to facing the enemy; combo state resets to neutral | [seen] | forward press (or Z/X) restores the original facing and idle, so the next Z is Z1 |
-| Whole `<` `>` twitch | under 10 frames before the next Z | [guess] | 2 ticks in the scripted test; no travel |
+| `<<` of `ZZZ<<>` (and `XXX<<>`) | a double-tap always starts a run in that direction, including out of recovery [obs]; footage of a no-step twitch was just `>` arriving immediately after | [obs] (overrides the earlier no-step reading) | from the first recovery tick, a double-tap `<<` / `>>` ends the move and starts a dash on the same tick. A single back press does not lock the fighter or swallow the first tap of a later `<<`. |
+| `>` after `<<` | cancels the run that just started and flicks facing; combo state is already idle, so the next Z/X is the first hit | [obs] | existing `dash_reverse`: the opposite press the frame it is pressed stops the dash and turns around |
+| Chaining `>>Z` / `>>ZX` | no dead frames between loops [obs] | [obs] | recovery (tick 10 on the slide, tick 20 on the slash) is dash-cancellable; same-tick Z after `>>` still starts the next slide. Old uncancelable tail (ticks 21-23 plus idle) is gone. |
 
-The 4th kick is avoided because `<<` cancels Z3 during recovery. `<<` alone is not enough to restart the string facing the enemy; `>` is required (docs/systems/03).
+The 4th kick or 4th arrow is avoided because `<<` (the double-tap) cancels recovery and `>` cancels that run, so the next press is Z1 / X1. The same rule applies to mixed chains (for example `ZZX<<>Z`). `WWW<<>WWW<<` must end in a left run: the first `<<>` must not eat the later `<<`.
 
 ## Body collision
 
@@ -94,6 +94,21 @@ Only a press in the 8-tick buffer before `cancel_from` is kept, and then it star
 - W on the same tick as the second →. Combat selects the attack before movement starts the dash, so this tick has to count as a dash command on its own.
 - W up to `dash_attack_linger_ticks` (12 ticks, [ours]) after the run key is released. After that window, W is the standing first kick and does not slide.
 
+## Walk and run speed
+
+Footage walk is about 234 px/s with a ~45 px body, so roughly **5.2 CW/s** [est]. Our previous walk was already 65 sub/tick = 6.5 CW/s, but Asty still found it far too slow on screen. New values [ours], both in `data/characters/ranger_movement.tres`:
+
+| | Previous | Ours | Notes |
+|---|---|---|---|
+| Walk | 65 sub/tick (6.5 CW/s, 3.9 m/s) | **120 sub/tick (12.0 CW/s, 7.2 m/s)** | Clearly above the footage estimate so the room feels like Elsword. |
+| Run | 150 sub/tick (15.0 CW/s) | **240 sub/tick (24.0 CW/s, 14.4 m/s)** | 2× walk, still clearly faster than a walk. |
+
+The older footage scale note ("our walk is 65 sub/tick, so 1 px ≈ 15 sub") was a calibration at that time; the pixel-to-CW figure (~45 px/CW) does not change.
+
+## Display
+
+The game's base viewport is **1920×1080**, with `canvas_items` stretch and `aspect` expand so a 3D side camera keeps its aspect. `allow_hidpi` is on for macOS Retina. The playable build launches in borderless fullscreen (`game/view/display_mode.gd`); Alt+Enter or F11 toggles a 1920×1080 window. Headless CI stays windowed. HUD and debug text are sized for the 1080p canvas. This is view-only; the sim is unchanged.
+
 ## Footage
 
 
@@ -106,11 +121,11 @@ Clips are reference only. They are not in the repo; they are kept on the build b
 | [Rena's (WS·NW) movements and combo instructional videos](https://www.youtube.com/watch?v=AgU7HPZANTo) | Captioned techniques (`→→ZX` around 5:30) in PvP | Qualitative only. |
 | [Basic Rena Combos](https://www.youtube.com/watch?v=hD_QEfmfQvQ), [Rena Basic Combo](https://www.youtube.com/watch?v=jKNvNP8nAYE) | Mixed dungeon combos | Not usable: cuts and moving targets. |
 
-How the footage was measured: phase correlation of the background strip between frames, with the player area masked out. This gives the camera pan, which equals her world motion because the camera tracks her. Key presses come from the on-screen keyboard overlay. Scale: her walk is ~234 px/s and our walk is 65 sub/tick (3900 sub/s), so 1 px ≈ 15 sub. Her body is ~45 px wide, so 1 CW ≈ 45 px. The two calibrations agree within ~20%.
+How the footage was measured: phase correlation of the background strip between frames, with the player area masked out. This gives the camera pan, which equals her world motion because the camera tracks her. Key presses come from the on-screen keyboard overlay. Scale: her walk is ~234 px/s and our walk at the time of that measurement was 65 sub/tick (3900 sub/s), so 1 px ≈ 15 sub. Her body is ~45 px wide, so 1 CW ≈ 45 px. The two calibrations agree within ~20%.
 
 ## Not found
 
 - No frame data or distances for base Rena commands on ElWiki. Every distance above is [obs], [est] or [ours].
 - No clean, single-command footage of base Rena `XXXX` recoil. The per-arrow recoil of `X` 2 and 4 comes from Asty's memory [obs]; only the 3rd-input backflip is documented.
-- A clean `>>Z` slide on its own. In the Twilight `dzx` section (0:45.37-0:45.47) X follows Z after only 6 frames, so the slide cannot be separated from the dash-through. Footage of similar slides is ~1.5-2 CW [guess]; ours is 3.80 CW [ours] because Asty asked for it to go much further.
+- A clean `>>Z` slide on its own. In the Twilight `dzx` section (0:45.37-0:45.47) X follows Z after only 6 frames, so the slide cannot be separated from the dash-through. Footage of similar slides is ~1.5-2 CW [guess]; ours is 6.50 CW [ours] because Asty asked for it to go much further than 3.80 CW.
 - Night Watcher's exact `>>ZX` distance. The Twilight clip shows the same command line, but on a later job.
