@@ -127,7 +127,7 @@ static func apply_dash_intent(world: SimWorld, f: SimFighter, history: InputHist
 	# An opposite press during a dash is always the reverse (below), even when it
 	# also completes a double tap. A recovery double-tap is queued in
 	# try_dash_cancel; idle double-taps start the run on the second-tap tick.
-	if not reverse_press and not attacking and f.queued_dash_ticks == 0:
+	if not reverse_press and not attacking and f.queued_dash_ticks == 0 and not f.lock_x_this_tick:
 		if history.double_tap(InputFrame.RIGHT, window) and (pressed & InputFrame.RIGHT) != 0:
 			started = SimFighter.RIGHT
 		elif history.double_tap(InputFrame.LEFT, window) and (pressed & InputFrame.LEFT) != 0:

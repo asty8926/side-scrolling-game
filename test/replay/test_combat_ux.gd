@@ -201,6 +201,50 @@ func test_left_right_and_z_on_the_same_tick_flips_then_starts_the_first_kick() -
 	assert_eq(ranger.x, x_at_queue, "the opposite press still flips in place")
 
 
+func test_turn_cancel_does_not_treat_the_opposite_press_as_a_new_dash() -> void:
+	# A RIGHT press shortly before `<<>` can still sit in the 12-tick
+	# double-tap window. `>` + Z on the turn-cancel tick must start z1,
+	# not a right slide, and `>` alone must not start a right run.
+	var world: SimWorld = SimSetup.create(&"test_room", 1)
+	var ranger: SimFighter = world.fighters[0]
+	var previous: int = 0
+	var started: PackedStringArray = PackedStringArray()
+	var script: Array[Array] = [[Z, 1], [0, 10], [Z, 1], [0, 10], [Z, 1], [0, 6], [R, 1], [0, 2], [L, 1], [0, 2], [L, 1]]
+	for segment: Array in script:
+		var held: int = segment[0]
+		var ticks: int = segment[1]
+		for _i: int in ticks:
+			previous = _held(world, previous, held)
+			for event: SimEvent in world.events:
+				if event.type == &"move_start" and event.actor == ranger.id:
+					started.append(String(event.move_id))
+	assert_eq(ranger.queued_dash_dir, SimFighter.LEFT)
+	previous = _held(world, previous, R | Z)
+	for event: SimEvent in world.events:
+		if event.type == &"move_start" and event.actor == ranger.id:
+			started.append(String(event.move_id))
+	assert_eq(started[-1], "ranger_z1", "the next Z after <<> is the first kick, got %s" % [started])
+	assert_false(started.has("ranger_dash_z"), "a leftover right double-tap must not start a slide: %s" % [started])
+	assert_eq(ranger.facing, SimFighter.RIGHT)
+	assert_eq(ranger.dash_dir, 0)
+
+	# Same setup, but `>` alone must not start a right run either.
+	world = SimSetup.create(&"test_room", 1)
+	ranger = world.fighters[0]
+	previous = 0
+	for segment: Array in script:
+		var held: int = segment[0]
+		var ticks: int = segment[1]
+		for _i: int in ticks:
+			previous = _held(world, previous, held)
+	assert_eq(ranger.queued_dash_dir, SimFighter.LEFT)
+	previous = _held(world, previous, R)
+	assert_eq(ranger.dash_dir, 0, "the opposite press of <<> does not start a run")
+	assert_eq(ranger.facing, SimFighter.RIGHT)
+	previous = _held(world, previous, 0)
+	assert_eq(ranger.dash_dir, 0, "a leftover right double-tap must not start a run on the next tick")
+
+
 func test_hit_stop_freezes_attacker_and_target_then_resumes() -> void:
 	var world: SimWorld = SimSetup.create(&"training", 1)
 	var ranger: SimFighter = world.fighters[0]

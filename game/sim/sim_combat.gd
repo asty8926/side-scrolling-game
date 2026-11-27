@@ -596,6 +596,8 @@ static func _resolve_queued_turn(world: SimWorld, f: SimFighter, history: InputH
 ## Facing used for a dash attack this tick: an active run, a just-released run
 ## still inside the linger window, or a `>>` / `<<` whose second tap is now.
 static func _dash_command_dir(world: SimWorld, f: SimFighter, history: InputHistory) -> int:
+	if f.lock_x_this_tick:
+		return 0
 	if f.dash_dir != 0:
 		return f.dash_dir
 	if f.queued_dash_dir != 0:
