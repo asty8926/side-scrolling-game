@@ -52,7 +52,7 @@ func test_rebuild_replaces_old_meshes() -> void:
 	view.build(layout, layout.tier_height(movement))
 	await wait_physics_frames(1)
 	# Floor, back wall, 4 beyond meshes, 2 door roots, and the platforms.
-	assert_eq(view.get_child_count(), layout.platforms.size() + 8, "room, beyond, doors and the platforms")
+	assert_eq(view.get_child_count(), layout.platforms.size() + 9, "room, beyond, doors, platforms and décor")
 
 
 func test_floor_and_back_wall_continue_past_the_collision_edges() -> void:
@@ -159,3 +159,42 @@ func test_invalid_camera_params_are_rejected_on_apply() -> void:
 	assert_push_error_count(1)
 	assert_gt(camera.params.shake_decay, 0.0, "invalid params are replaced with defaults")
 	assert_eq(camera.params.validate(), [] as Array[String])
+
+
+func test_decor_builds_a_forest_backdrop_and_pilasters() -> void:
+	var layout: RoomLayout = load(TEST_ROOM) as RoomLayout
+	var view: RoomView = _build(layout)
+	var decor: Node3D = view.decor_root()
+	assert_not_null(decor, "build creates a Decor root")
+	assert_eq(decor.name, "Decor")
+	var backdrop: MeshInstance3D = decor.get_node("ForestBackdrop") as MeshInstance3D
+	assert_not_null(backdrop, "a forest backdrop sits behind the hall")
+	var material: StandardMaterial3D = backdrop.mesh.surface_get_material(0) as StandardMaterial3D
+	assert_not_null(material)
+	assert_not_null(material.albedo_texture, "the backdrop is a painted texture, not a flat color")
+	assert_not_null(decor.get_node_or_null("Pilaster0"), "the hall has pilasters")
+	assert_not_null(decor.get_node_or_null("Cornice"), "a cornice caps the wall")
+	assert_not_null(decor.get_node_or_null("Window0"), "window openings sit between pilasters")
+
+
+func test_floor_uses_a_procedural_wood_texture() -> void:
+	var layout: RoomLayout = load(TEST_ROOM) as RoomLayout
+	var view: RoomView = _build(layout)
+	var floor: MeshInstance3D = view.get_node("Floor") as MeshInstance3D
+	assert_not_null(floor)
+	var material: StandardMaterial3D = floor.mesh.surface_get_material(0) as StandardMaterial3D
+	assert_not_null(material, "the floor has a material")
+	assert_not_null(material.albedo_texture, "the floor is wood-textured, not a flat color")
+	assert_true(material.uv1_triplanar, "the wood maps in world space")
+
+
+func test_parallax_shifts_the_forest_backdrop() -> void:
+	var layout: RoomLayout = load(TEST_ROOM) as RoomLayout
+	var view: RoomView = _build(layout)
+	var backdrop: MeshInstance3D = view.decor_root().get_node("ForestBackdrop") as MeshInstance3D
+	var home: float = backdrop.position.x
+	view.apply_parallax(10.0)
+	assert_almost_eq(backdrop.position.x, home + 10.0 * RoomView.BACKDROP_PARALLAX, 0.0001, "the forest lags the camera")
+	view.apply_parallax(0.0)
+	assert_almost_eq(backdrop.position.x, home, 0.0001, "the backdrop returns when the camera does")
+
